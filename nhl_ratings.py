@@ -18,6 +18,7 @@ Writes, for the whole league (site/data/, which the static site reads):
     nhl_goals.csv      one row per goal, with its highlight clip link
     nhl_lines.csv      forward lines and defense pairs per game, from 5-on-5 shift overlap
     nhl_standings.csv  current standings
+    nhl_upcoming.csv   the next game day's schedule, with pre-game win chances and each side's best-rated player
     logos-*.js         team logos for the dashboard
 
 Usage:
@@ -485,6 +486,53 @@ def lines_for_game(gid, box, pbp, shifts, rating_of):
     return out
 
 
+
+# ----------------------------------------------------------------------------- upcoming games
+def upcoming_games(rows, gtype):
+    """The next game day's schedule (US Eastern date) with each side's pre-game win chance and best-rated player."""
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+    today = dt.datetime.now(ZoneInfo("America/New_York")).date().isoformat()
+    week = fetch(f"{WEB}/schedule/{today}", f"upcoming_{today}.json", ttl=1800)
+    day, games = None, []
+    for d in week.get("gameWeek", []):
+        todo = [g for g in d["games"] if g.get("gameType") == gtype and g.get("gameState") not in ("OFF", "FINAL")
+                and g.get("gameScheduleState", "OK") == "OK"]
+        if todo:
+            day, games = d["date"], todo
+            break
+    if not games:
+        return []
+    strength = pregame_strength(day, gtype)
+    # best-rated regular per team: highest season average with at least a third of the team's games
+    per = defaultdict(list)
+    for r in rows:
+        per[(r["team"], r["player_id"])].append(r)
+    team_games = defaultdict(set)
+    for r in rows:
+        team_games[r["team"]].add(r["game_id"])
+    star = {}
+    for (team, _), rs in per.items():
+        if len(rs) * 3 < len(team_games[team]):
+            continue
+        avg = sum(r["rating"] for r in rs) / len(rs)
+        if team not in star or avg > star[team][1]:
+            star[team] = (rs[-1]["name"], round(avg, 2), rs[0]["pos"])
+    out = []
+    for g in sorted(games, key=lambda g: (g["startTimeUTC"], g["id"])):
+        a, h = g["awayTeam"]["abbrev"], g["homeTeam"]["abbrev"]
+        p_home = log5(min(strength.get(h, 0.5) + HOME_EDGE, 0.95), strength.get(a, 0.5))
+        tv = [b["network"] for b in g.get("tvBroadcasts", []) if b.get("market") == "N"]
+        out.append(dict(
+            game_id=g["id"], date=day, start_utc=g["startTimeUTC"], away=a, home=h,
+            venue=(g.get("venue") or {}).get("default", ""), tv_national=", ".join(dict.fromkeys(tv)),
+            home_win_pct=round(p_home * 100), away_win_pct=100 - round(p_home * 100),
+            away_star=star.get(a, ("", "", ""))[0], away_star_avg=star.get(a, ("", "", ""))[1],
+            home_star=star.get(h, ("", "", ""))[0], home_star_avg=star.get(h, ("", "", ""))[1],
+            gamecenter_url=f"https://www.nhl.com/gamecenter/{g['id']}"))
+    return out
+
+
 # ----------------------------------------------------------------------------- main
 def season_window(season):
     """(season id, first day, last day to look at) from the NHL's list of seasons."""
@@ -584,6 +632,10 @@ def main():
     lines = [u for gid, box, pbp, sh in raw for u in lines_for_game(gid, box, pbp, sh, rating_of)]
     write_csv("nhl_lines.csv", lines, list(lines[0].keys()))
     standings = write_standings_and_logos(a.out)
+    upcoming = upcoming_games(rows, gtype)
+    up_cols = ["game_id", "date", "start_utc", "away", "home", "venue", "tv_national", "home_win_pct", "away_win_pct",
+               "away_star", "away_star_avg", "home_star", "home_star_avg", "gamecenter_url"]
+    write_csv("nhl_upcoming.csv", upcoming, up_cols)
     meta = dict(season=str(season_id), playoffs=a.playoffs, games=len(all_ids), generated=time.strftime("%Y-%m-%d"),
                 generated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), last_game_day=max(g["date"] for g in games_out),
                 reference=ref, scale="rank -> 5 + %g * normal quantile" % SPREAD,
@@ -592,7 +644,7 @@ def main():
         json.dump(meta, f, indent=1)
     ups = sorted((g for g in games_out if g["upset"]), key=lambda g: g["winner_pregame_prob"])
     print(f"Written to {a.out}: {len(rows)} player-games, {len(games_out)} games, {len(goals_out)} goals, "
-          f"{len(lines)} line units, standings as of {standings[0]['as_of']}", file=sys.stderr)
+          f"{len(lines)} line units, {len(upcoming)} upcoming games, standings as of {standings[0]['as_of']}", file=sys.stderr)
     for g in ups[:5]:
         print(f'  upset {g["date"]} {g["winner"]} beat {g["loser"]} {g["final"]} (pre-game win chance {g["winner_pregame_prob"]:.0%})', file=sys.stderr)
 

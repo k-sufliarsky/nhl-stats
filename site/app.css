@@ -272,3 +272,10 @@
 .hr a.btn-primary, .hr a.btn-primary:hover { color: var(--color-panel); }
 .hr-season.one-team th:nth-child(2), .hr-season.one-team td:nth-child(2) { display: none; }
 .tb-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-fg-muted); }
+
+/* up next */
+.game-next .sc.pct { font-size: 22px; font-weight: 600; color: var(--color-fg-muted); }
+.odds { display: flex; height: 6px; margin: 2px 14px 6px; border-radius: 3px; overflow: hidden; background: var(--color-ink-soft); gap: 2px; }
+.odds i { display: block; height: 100%; background: var(--cds-chart-muted); }
+.odds i.fav { background: var(--series-1); }
+#latest > #upnext { margin-top: var(--cds-gap-xl); }

@@ -5,6 +5,7 @@ A 0–10 rating for every NHL player in every game, plus a spoiler-free list of 
 **Live site:** https://k-sufliarsky.github.io/nhl-stats/
 
 - **Latest games** opens first and hides scores until you reveal them. Recap and condensed-game videos open in the NHL's own player, and their titles name only the teams.
+- **Up next** lists the next game day's schedule with start times in your time zone, national TV, each side's pre-game win chance and its best-rated player.
 - **Teams and ratings**: pick a team by its logo for season averages, trend charts, who's trending up or down, line combinations, a game-by-game grid, single-game detail, upsets and standings.
 
 The data refreshes automatically each night after the last game finishes (see [Automatic updates](#automatic-updates)).
@@ -55,7 +56,7 @@ Recap videos are sometimes posted after the update runs. Games still missing a v
 | `nhl_ratings.py` | Downloads NHL data, computes ratings, lines, upsets and standings, writes `site/data/` |
 | `should_update.py` | Decides whether the nightly update should run |
 | `site/` | The static website: `index.html`, `app.js`, `app.css`, `theme.css`, `runtime.js` (loads the data and draws the page) |
-| `site/data/` | Generated data the site reads |
+| `site/data/` | Generated data the site reads, including `nhl_upcoming.csv` (the next game day) |
 | `site/vendor/d3.min.js` | d3.js 7.9.0, with its license |
 | `dashboard/index.html` | Source of the claude.ai version of the dashboard. It only runs inside claude.ai, not on its own |
 

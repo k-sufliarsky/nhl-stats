@@ -852,6 +852,80 @@
     }
   });
 
+  // ---------------------------------------------------------------- up next (the next game day)
+  const longDay = d3.utcFormat('%A, %B %-d');
+  function upcoming() {
+    const u = dash.data('upcoming');
+    return u.status === 'ok' && u.data ? u.data : null;
+  }
+  dash.draw('upNextTitle', (el) => {
+    const rows = upcoming();
+    const d = rows && rows[0] && parseDate(rows[0].date);
+    el.textContent = d ? 'Up next · ' + longDay(d) : 'Up next';
+  });
+  dash.draw('upNext', (el) => {
+    const u = dash.data('upcoming');
+    const dk = darkTheme(el);
+    const st = dash.data('standings');
+    if (u.status === 'ok' && unchanged(el, [u.data, st.data, logoSet(dk), dk])) return;
+    el.replaceChildren();
+    if (u.status === 'error') { el.textContent = 'Failed to load'; return; }
+    if (u.status !== 'ok') { el.textContent = '—'; return; }
+    if (!u.data.length) {
+      const p = document.createElement('p'); p.className = 'hr-sub';
+      p.textContent = 'No games scheduled in the next few days.';
+      el.appendChild(p); return;
+    }
+    const byTeam = new Map(st.status === 'ok' ? st.data.map((t) => [t.team, t]) : []);
+    for (const g of u.data) {
+      const card = document.createElement('article'); card.className = 'game game-next';
+      const away = byTeam.get(g.away), home = byTeam.get(g.home);
+      card.setAttribute('aria-label', (away ? away.name : g.away) + ' at ' + (home ? home.name : g.home));
+      const top = document.createElement('header'); top.className = 'game-top';
+      const start = g.start_utc ? new Date(g.start_utc) : null;
+      const time = document.createElement('span'); time.className = 'game-time'; time.textContent = start && !isNaN(start) ? timeFmt(start) : 'TBD';
+      const where = document.createElement('span'); where.className = 'game-venue'; where.textContent = g.venue || '';
+      const tv = document.createElement('span'); tv.className = 'game-state'; tv.textContent = g.tv_national || '';
+      top.append(time, where, tv);
+      card.appendChild(top);
+      for (const [code, side, pctField] of [[g.away, 'Away', 'away_win_pct'], [g.home, 'Home', 'home_win_pct']]) {
+        const t = byTeam.get(code);
+        const row = document.createElement('button'); row.type = 'button'; row.className = 'game-team';
+        row.setAttribute('aria-label', 'Open ' + (t ? t.name : code) + ' stats');
+        row.addEventListener('click', () => openTeamStats(code));
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = t ? t.name : code;
+        const rec = document.createElement('span'); rec.className = 'side'; rec.textContent = t ? t.w + '-' + t.l + '-' + t.otl : side;
+        const pct = document.createElement('span'); pct.className = 'sc pct';
+        pct.textContent = g[pctField] + '%';
+        row.append(logo(code, dk), nm, rec, pct);
+        card.appendChild(row);
+      }
+      const bar = document.createElement('div'); bar.className = 'odds';
+      bar.setAttribute('role', 'img');
+      bar.setAttribute('aria-label', g.away + ' ' + g.away_win_pct + '% to win, ' + g.home + ' ' + g.home_win_pct + '%');
+      const ba = document.createElement('i'); ba.style.width = g.away_win_pct + '%';
+      const bh = document.createElement('i'); bh.style.width = g.home_win_pct + '%';
+      if (+g.away_win_pct >= +g.home_win_pct) ba.className = 'fav'; else bh.className = 'fav';
+      bar.append(ba, bh);
+      card.appendChild(bar);
+      const notes = document.createElement('div'); notes.className = 'game-notes';
+      const watch = document.createElement('div');
+      watch.append('Players to watch: ');
+      for (const [i, [n, v]] of [[g.away_star, g.away_star_avg], [g.home_star, g.home_star_avg]].entries()) {
+        if (!n) continue;
+        if (i && watch.childNodes.length > 1) watch.append('  ');
+        watch.append(n + ' ', chip(+v, fmt2(+v)));
+      }
+      notes.appendChild(watch);
+      card.appendChild(notes);
+      const acts = document.createElement('div'); acts.className = 'game-acts';
+      const gc = safeUrl(g.gamecenter_url);
+      if (gc) { const x = link('Preview on NHL.com', gc); x.className = 'btn'; acts.appendChild(x); }
+      card.appendChild(acts);
+      el.appendChild(card);
+    }
+  });
+
   // ---------------------------------------------------------------- team bar + overview
   dash.draw('teamBar', (el) => {
     const rows = standings();

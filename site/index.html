@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="theme.css?v=20261112h">
-<link rel="stylesheet" href="app.css?v=20261112h">
+<link rel="stylesheet" href="theme.css?v=20261112i">
+<link rel="stylesheet" href="app.css?v=20261112i">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js?v=20261112h"></script>
+<script src="runtime.js?v=20261112i"></script>
 </head>
 <body>
 <header class="app-head" id="top">
@@ -49,6 +49,16 @@
       </div>
     </div>
     <div class="hr-cards" data-source="games standings logosLight logosDark" data-draw="latestGames"></div>
+
+  <section class="hr-sec" id="upnext" aria-labelledby="upnext-title">
+    <div class="sec-head">
+      <div>
+        <h2 id="upnext-title" data-draw="upNextTitle">Up next</h2>
+        <p class="hr-sub">Start times in your time zone. Win chances come from points percentage and home ice; players to watch are each team's best-rated regular this season.</p>
+      </div>
+    </div>
+    <div class="hr-cards" data-source="upcoming standings logosLight logosDark" data-draw="upNext"></div>
+  </section>
   </section>
 
   <div class="hr-panel" id="stats" role="tabpanel" aria-labelledby="tab-stats" hidden>
@@ -314,6 +324,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js?v=20261112h"></script>
+<script src="app.js?v=20261112i"></script>
 </body>
 </html>
