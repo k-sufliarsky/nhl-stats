@@ -16,7 +16,7 @@
   const calcs = {};
   const draws = {};
   const dataListeners = [];
-  const defaults = { team: 'MTL' };
+  const defaults = { team: '' };   // no team picked until the reader picks one
   let params = { ...defaults };
 
   const fromUrl = new URLSearchParams(location.search).get('team');

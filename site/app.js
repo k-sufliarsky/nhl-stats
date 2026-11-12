@@ -11,7 +11,48 @@
     const pct = Math.round(8 + Math.min(1, Math.abs(v - 5) / 4.5) * 52);
     return 'color-mix(in oklab, var(' + (v >= 5 ? '--color-ok' : '--color-bad') + ') ' + pct + '%, var(--color-panel))';
   };
-  const team = () => dash.params().team || 'MTL';
+  const team = () => dash.params().team || '';
+  // Sections that need a team: hidden until one is picked, with a hint in their place.
+  const TEAM_SECTIONS = ['team', 'team-trend', 'grid', 'game'];   // the rest switch to league-wide views
+  function syncTeamSections() {
+    const has = !!team();
+    const setHidden = (el, want) => { if (el && el.hidden !== want) el.hidden = want; };   // only touch it when it changes
+    TEAM_SECTIONS.forEach((id) => setHidden(document.getElementById(id), !has));
+    setHidden(document.getElementById('hr-no-team'), has);
+  }
+  // One shared tooltip on top of the page. Fixed to the window so scrolling tables and chart edges can't cut it off;
+  // it opens below the point, or above it when there isn't room below.
+  let floatTip = null;
+  function tooltip() {
+    if (!floatTip) {
+      floatTip = document.createElement('div');
+      floatTip.className = 'hr-tip hr-tip-float';
+      floatTip.setAttribute('role', 'tooltip');
+      floatTip.hidden = true;
+      document.body.appendChild(floatTip);
+      const hide = () => { floatTip.hidden = true; };
+      window.addEventListener('scroll', hide, { passive: true });
+      document.addEventListener('scroll', hide, { passive: true, capture: true });
+    }
+    return floatTip;
+  }
+  function showTooltip(anchor, lines) {
+    const tip = tooltip();
+    tip.replaceChildren();
+    lines.forEach((t, i) => {
+      if (i === 0) { const h = document.createElement('strong'); h.textContent = t; tip.appendChild(h); return; }
+      const s = document.createElement('span'); s.textContent = t; tip.append(s, document.createElement('br'));
+    });
+    tip.hidden = false;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = anchor.left + anchor.width / 2 - tw / 2;
+    x = Math.max(8, Math.min(x, window.innerWidth - tw - 8));
+    let y = anchor.bottom + 8;
+    if (y + th > window.innerHeight - 8) y = Math.max(8, anchor.top - th - 8);
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  }
+  const hideTooltip = () => { if (floatTip) floatTip.hidden = true; };
   // What a player did in one game, in a line: points for skaters, saves for goalies.
   function statLine(r) {
     if (r.pos === 'G') return r.SV + ' saves on ' + r.SA + ' shots · ' + r.GA + ' GA vs ' + r.xGA + ' expected · TOI ' + r.toi;
@@ -131,14 +172,15 @@
 
   dash.draw('seasonRows', (tb) => {
     const s = dash.data('season');
-    if (s.status === 'ok' && s.data && unchanged(tb, [s.data, team()])) return;
+    if (s.status === 'ok' && s.data && unchanged(tb, [s.data, team(), dash.data('summary').data])) return;
     tb.replaceChildren();
     if (s.status !== 'ok' || !s.data) return;
-    for (const p of teamPlayers()) {
+    const list = team() ? teamPlayers() : teamPlayers().filter((p) => p.gp >= leagueMinGames()).slice(0, 50);
+    for (const p of list) {
       const tr = document.createElement('tr');
       tr.dataset.key = p.team + ',' + p.player_id;
       const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
-      td(p.name, 'l'); td(p.pos, 'l'); td(String(p.gp));
+      td(p.name, 'l'); td(p.team, 'l'); td(p.pos, 'l'); td(String(p.gp));
       const avg = document.createElement('td');
       const wrap = document.createElement('span'); wrap.className = 'hr-bar';
       const bar = document.createElement('i'); const fill = document.createElement('b');
@@ -187,7 +229,6 @@
       thead.appendChild(th);
     }
     const tbody = table.createTBody();
-    const tip = document.createElement('div'); tip.className = 'hr-tip'; tip.hidden = true;
     for (const p of teamPlayers()) {
       const tr = tbody.insertRow();
       const nm = document.createElement('th'); nm.className = 'nm'; nm.textContent = p.name; tr.appendChild(nm);
@@ -202,29 +243,18 @@
         td.tabIndex = 0;
         td.dataset.source = 'ratings'; td.dataset.field = 'rating';
         td.dataset.where = 'game_id=' + r.game_id + '&player_id=' + r.player_id;
-        const show = () => {
-          tip.replaceChildren();
-          const h = document.createElement('strong'); h.textContent = r.name + ' · ' + fmt1(v); tip.appendChild(h);
-          const sub = document.createElement('span'); sub.textContent = gameLabel(r); tip.appendChild(sub);
-          tip.appendChild(document.createElement('br'));
-          const line = document.createElement('span');
-          line.textContent = statLine(r) + (r.pos === 'G' ? '' : ' · 5v5 attempts ' + r.CF + '–' + r.CA + ' · on-ice goals ' + r.GF + '–' + r.GA);
-          tip.appendChild(line);
-          tip.hidden = false;
-          const box = el.getBoundingClientRect(), c = td.getBoundingClientRect();
-          let x = c.left - box.left + el.scrollLeft + c.width / 2 - 130;
-          x = Math.max(el.scrollLeft + 4, Math.min(x, el.scrollLeft + el.clientWidth - 264));
-          tip.style.left = x + 'px';
-          tip.style.top = (c.bottom - box.top + el.scrollTop + 4) + 'px';
-        };
+        const show = () => showTooltip(td.getBoundingClientRect(), [
+          r.name + ' · ' + fmt1(v), gameLabel(r),
+          statLine(r) + (r.pos === 'G' ? '' : ' · 5v5 attempts ' + r.CF + '–' + r.CA + ' · on-ice goals ' + r.GF + '–' + r.GA),
+          pctLine(r)].filter(Boolean));
         td.addEventListener('mouseenter', show);
         td.addEventListener('focus', show);
         td.addEventListener('click', show);
-        td.addEventListener('mouseleave', () => { tip.hidden = true; });
-        td.addEventListener('blur', () => { tip.hidden = true; });
+        td.addEventListener('mouseleave', hideTooltip);
+        td.addEventListener('blur', hideTooltip);
       }
     }
-    el.append(table, tip);
+    el.append(table);
   });
 
   function gamesList() {
@@ -372,17 +402,23 @@
   }
   document.querySelectorAll('.hr-sw-roll').forEach((el) => { el.style.background = dash.colors[0]; });
 
+  // The selected team's players, or with no team picked, every player in the league.
   function teamPlayers() {
     const s = dash.data('season');
-    return s.status === 'ok' && s.data ? groupOf(s.data, 'team', (p) => p.team).get(team()) || [] : [];
+    if (s.status !== 'ok' || !s.data) return [];
+    return team() ? groupOf(s.data, 'team', (p) => p.team).get(team()) || [] : s.data;
+  }
+  // League view: the season's leaders, players with at least half of a team's games so far.
+  function leagueMinGames() {
+    const s = dash.data('summary');
+    const most = s.status === 'ok' && s.data ? d3.max(s.data, (t) => t.games) : 0;
+    return Math.max(1, Math.floor(most / 2));
   }
   function currentPlayer() {
     syncTeam();
-    const players = teamPlayers();
-    if (!players.length) return null;
-    const s = summary();
-    return players.find((p) => p.player_id === state.player)
-      || (s && players.find((p) => p.name === s.leader)) || players[0];
+    if (!state.player) return null;                           // nothing until someone is picked
+    const matches = teamPlayers().filter((p) => p.player_id === state.player);
+    return d3.greatest(matches, (p) => p.gp) || null;      // a traded player: the team he played most for
   }
 
   // A line chart of 0-10 ratings over the season: dots per game, a rolling-average line, a reference line at 5.
@@ -430,8 +466,6 @@
         .transition().duration(900).ease(d3.easeCubicOut).style('stroke-dashoffset', 0);
     }
 
-    const tip = document.createElement('div'); tip.className = 'hr-tip'; tip.hidden = true;
-    el.appendChild(tip);
     const focus = svg.append('circle').attr('r', 7).style('fill', 'none').style('stroke', 'var(--color-fg)').style('stroke-width', 1.5).style('display', 'none');
     const show = (event) => {
       const [mx] = d3.pointer(event, svg.node());
@@ -439,19 +473,12 @@
       const p = d3.least(pts, (q) => Math.abs(x(q.d) - sx));
       if (!p) return;
       focus.style('display', null).attr('cx', x(p.d)).attr('cy', y(p.v));
-      tip.replaceChildren();
-      const h = document.createElement('strong'); h.textContent = opts.title(p); tip.appendChild(h);
-      for (const line of opts.lines(p)) { const s = document.createElement('span'); s.textContent = line; tip.append(s, document.createElement('br')); }
-      tip.hidden = false;
-      const scale = svg.node().getBoundingClientRect().width / width;
-      const px = x(p.d) * scale;
-      tip.style.left = Math.max(4, Math.min(px - 120, el.clientWidth - 248)) + 'px';
-      tip.style.top = (y(p.v) * scale + 14) + 'px';
+      showTooltip(focus.node().getBoundingClientRect(), [opts.title(p), ...opts.lines(p)]);
     };
     svg.append('rect').attr('x', m.left).attr('y', m.top).attr('width', width - m.left - m.right).attr('height', height - m.top - m.bottom)
       .style('fill', 'transparent')
       .on('pointermove', show).on('pointerdown', show)
-      .on('pointerleave', () => { tip.hidden = true; focus.style('display', 'none'); });
+      .on('pointerleave', () => { hideTooltip(); focus.style('display', 'none'); });
   }
 
   const sign = (v) => (v > 0 ? '+' : '') + fmt2(v);
@@ -488,7 +515,7 @@
 
   dash.draw('playerText', (el) => {
     const p = currentPlayer();
-    if (!p) { el.textContent = '—'; return; }
+    if (!p) { el.textContent = team() ? 'Pick a player above to chart their season game by game. Click them again to clear.' : ''; return; }
     const W = 'team=' + encodeURIComponent(p.team) + '&player_id=' + encodeURIComponent(p.player_id);
     const players = teamPlayers().filter((q) => q.gp >= 6);
     const medianSpread = d3.median(players, (q) => q.spread);
@@ -514,7 +541,14 @@
     const d = dash.data('rolling');
     if (d.status === 'error') { el.textContent = 'Failed to load'; return; }
     const p = currentPlayer();
-    if (d.status !== 'ok' || !d.data || !p) { el.textContent = '—'; return; }
+    if (!p) {
+      el.replaceChildren();
+      const empty = document.createElement('div'); empty.className = 'hr-empty';
+      empty.textContent = 'No player picked yet';
+      el.appendChild(empty);
+      return;
+    }
+    if (d.status !== 'ok' || !d.data) { el.textContent = '—'; return; }
     const pts = (groupOf(d.data, 'teamPlayer', (r) => r.team + ',' + r.player_id).get(p.team + ',' + p.player_id) || [])
       .map((r) => ({ d: parseDate(r.date), v: r.rating, roll: r.roll5, r, fill: hrColor(r.rating) }));
     ratingChart(el, pts, {
@@ -542,18 +576,14 @@
   dash.draw('hotRows', (tb) => {
     tb.replaceChildren();
     const r = dash.data('rolling');
-    const players = teamPlayers().filter((p) => p.gp >= 6);
+    const league = !team();
+    const players = teamPlayers().filter((p) => p.gp >= (league ? Math.max(6, leagueMinGames()) : 6));
     if (!players.length) return;
-    const recent = new Map();
-    if (r.status === 'ok' && r.data) {
-      for (const row of groupOf(r.data, 'team', (x) => x.team).get(team()) || []) {
-        if (!recent.has(row.player_id)) recent.set(row.player_id, []);
-        recent.get(row.player_id).push(row);
-      }
-    }
+    const recent = r.status === 'ok' && r.data ? groupOf(r.data, 'teamPlayer', (x) => x.team + ',' + x.player_id) : new Map();
     const sorted = d3.sort(players, (p) => -p.delta);
-    const up = sorted.filter((p) => p.delta > 0).slice(0, 5);
-    const down = sorted.filter((p) => p.delta < 0).slice(-5).reverse();
+    const n = league ? 10 : 5;
+    const up = sorted.filter((p) => p.delta > 0).slice(0, n);
+    const down = sorted.filter((p) => p.delta < 0).slice(-n).reverse();
     const cur = currentPlayer();
     for (const [label, list] of [['Trending up', up], ['Trending down', down]]) {
       if (!list.length) continue;
@@ -565,10 +595,10 @@
         tr.className = 'pick' + (cur && cur.player_id === p.player_id ? ' on' : '');
         tr.tabIndex = 0;
         const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
-        td(p.name, 'l'); td(p.pos, 'l'); td(String(p.gp)); td(fmt2(p.avg));
+        td(league ? p.name + ' (' + p.team + ')' : p.name, 'l'); td(p.pos, 'l'); td(String(p.gp)); td(fmt2(p.avg));
         const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt2(p.last5))); tr.appendChild(l5);
         td(sign(p.delta), p.delta > 0 ? 'pos' : 'neg');
-        const games = (recent.get(p.player_id) || []).sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-10).map((g) => g.rating);
+        const games = (recent.get(p.team + ',' + p.player_id) || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-10).map((g) => g.rating);
         const sp = document.createElement('td'); sp.className = 'l'; sp.appendChild(sparkline(games)); tr.appendChild(sp);
         tr.addEventListener('click', () => openPlayer(p.player_id));
         tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id); } });
@@ -581,6 +611,11 @@
   dash.draw('playerGrid', (el) => {
     const players = teamPlayers();
     el.replaceChildren();
+    if (!team()) {
+      const p = document.createElement('p'); p.className = 'hr-sub';
+      p.textContent = 'Click a player in Season averages or Who\'s trending to chart them, or pick a team above for its full roster.';
+      el.appendChild(p); return;
+    }
     if (!players.length) { el.textContent = '—'; return; }
     const cur = currentPlayer();
     for (const [grp, label] of [['F', 'Forwards'], ['D', 'Defense'], ['G', 'Goalies']]) {
@@ -598,7 +633,7 @@
         const pp = document.createElement('span'); pp.className = 'pp'; pp.textContent = p.pos + ' · ' + p.gp; n.appendChild(pp);
         b.append(n, chip(p.avg, fmt2(p.avg)));
         b.addEventListener('click', () => {
-          state.player = p.player_id;
+          state.player = state.player === p.player_id ? null : p.player_id;   // click again to clear
           ['playerGrid', 'playerText', 'playerChart', 'hotRows'].forEach((x) => dash.draw(x));
         });
         grid.appendChild(b);
@@ -635,18 +670,19 @@
     const s = dash.data('lineSeason');
     tb.replaceChildren();
     if (s.status !== 'ok' || !s.data) return;
-    const mine = groupOf(s.data, 'team', (r) => r.team).get(team()) || [];
-    for (const [kind, label, n] of [['F', 'Forward lines', 8], ['D', 'Defense pairs', 5]]) {
-      const list = d3.sort(mine.filter((r) => r.kind === kind), (r) => -r.toi_min).slice(0, n);
+    const league = !team();
+    const mine = league ? s.data.filter((r) => r.games >= 4 && r.avg_rating != null) : groupOf(s.data, 'team', (r) => r.team).get(team()) || [];
+    for (const [kind, label, n] of [['F', 'Forward lines', league ? 10 : 8], ['D', 'Defense pairs', league ? 6 : 5]]) {
+      const list = d3.sort(mine.filter((r) => r.kind === kind), (r) => (league ? -r.avg_rating : -r.toi_min)).slice(0, n);
       if (!list.length) continue;
       const gr = document.createElement('tr'); gr.className = 'grp';
-      const g = document.createElement('td'); g.colSpan = 9; g.textContent = label + ', most used first'; gr.appendChild(g);
+      const g = document.createElement('td'); g.colSpan = 9; g.textContent = label + (league ? ', best rated in the league (4+ games together)' : ', most used first'); gr.appendChild(g);
       tb.appendChild(gr);
       for (const r of list) {
         const tr = document.createElement('tr');
         tr.dataset.key = r.team + ',' + r.player_ids;
         const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
-        td(r.names, 'l'); td(String(r.games)); td(String(r.toi_min)); td(String(r.CF)); td(String(r.CA));
+        td(league ? r.team + ' · ' + r.names : r.names, 'l'); td(String(r.games)); td(String(r.toi_min)); td(String(r.CF)); td(String(r.CA));
         td(r.cf_pct == null ? '—' : String(r.cf_pct), r.cf_pct == null ? '' : (r.cf_pct >= 50 ? 'pos' : 'neg'));
         td(String(r.GF)); td(String(r.GA));
         const c = document.createElement('td'); c.appendChild(r.avg_rating == null ? document.createTextNode('—') : chip(r.avg_rating, fmt2(r.avg_rating))); tr.appendChild(c);
@@ -721,6 +757,7 @@
 
   function openTeamStats(code) {
     dash.setParams({ team: code });
+    syncTeamSections();
     showTab('stats');
     showStandings(false);
     const s = document.getElementById('team');
@@ -801,6 +838,7 @@
     dash.setLink(name);
   }
   document.querySelectorAll('.hr-tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+  syncTeamSections();
   if (location.hash === '#stats') showTab('stats');
 
   // ---------------------------------------------------------------- teams, logos, standings
@@ -905,7 +943,14 @@
   }));
   document.querySelectorAll('#hr-hide-stand').forEach((b) => b.addEventListener('click', () => showStandings(false)));
   function pickTeam(code) {
+    if (code === team()) {                       // clicking the selected team again clears it
+      dash.setParams({ team: '' });
+      syncTeamSections();
+      showStandings(true);
+      return;
+    }
     dash.setParams({ team: code });
+    syncTeamSections();
     showStandings(false);
     const s = document.getElementById('team');
     if (s) s.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
@@ -999,6 +1044,7 @@
     syncTeam();
     const ups = upsetGames();
     if (state.upset) { const pick = ups.find((r) => r.game_id === state.upset); if (pick) return pick; }
+    if (!team()) return ups[0] || null;
     return ups.find((r) => r.winner === team()) || ups.find((r) => r.loser === team()) || null;
   }
 
@@ -1105,3 +1151,4 @@
       + (m.data.last_game_day ? ' · games through ' + m.data.last_game_day : '');
   });
 })();
+

@@ -9,10 +9,10 @@
 <title>NHL Game Ratings</title>
 <meta name="description" content="Per-game 0-10 ratings for every NHL player, spoiler-free latest games, standings, trends and line combinations.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='20' rx='12' ry='5' fill='%23141a23'/%3E%3Crect x='4' y='14' width='24' height='6' fill='%23141a23'/%3E%3Cellipse cx='16' cy='14' rx='12' ry='5' fill='%23394456'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="theme.css?v=20261112e">
+<link rel="stylesheet" href="app.css?v=20261112e">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js"></script>
+<script src="runtime.js?v=20261112e"></script>
 </head>
 <body>
 <main id="dash-root">
@@ -41,11 +41,13 @@
   </section>
 
   <div class="hr-panel" id="stats" role="tabpanel" aria-labelledby="tab-stats" hidden>
-  <p class="hr-sub">Pick a team by its logo. Every section below follows the team you pick.</p>
+  <p class="hr-sub">Pick a team by its logo; every section below follows it. Click it again to clear it.</p>
 
   <section class="hr-sec" id="teams" aria-label="Teams by conference and division">
     <div class="hr-confs" data-source="standings logosLight logosDark" data-draw="teamGrid"></div>
   </section>
+
+  <p class="hr-lede" id="hr-no-team" hidden><b>Whole league.</b> Below are this season's leaders across all 32 teams. Pick a team above to focus on it, and click it again to come back here.</p>
 
   <div class="hr-standbar">
     <button type="button" class="hr-btn" id="hr-show-stand" aria-controls="standings" hidden>Show league standings</button>
@@ -100,12 +102,13 @@
   <section class="hr-sec" id="season">
     <div>
       <h2>Season averages</h2>
-      <p class="hr-sub">Players ranked by their average per-game rating for this team. Last 5 is the average of their five most recent games. Click a player to see their trend.</p>
+      <p class="hr-sub">Players ranked by their average per-game rating: the picked team's roster, or with no team picked, the league's top 50 among players with at least half of a team's games. Last 5 is the average of their five most recent games. Click a player to see their trend.</p>
     </div>
     <div class="hr-scroll">
       <table class="hr-full hr-season" data-source="season" data-row-key="team,player_id" aria-label="Season average ratings by player">
         <thead><tr>
           <th class="l" data-field="name">Player</th>
+          <th class="l" data-field="team">Team</th>
           <th class="l" data-field="pos">Pos</th>
           <th data-field="gp">GP</th>
           <th data-field="avg">Avg</th>
@@ -258,7 +261,7 @@
   <section class="hr-sec" id="upsets">
     <div>
       <h2>Upsets</h2>
-      <p class="hr-sub">An upset is a win by a team that had under a 40% chance before the game. The chance comes from each team's points percentage going into the game, blended with last season's for the first weeks, plus a small home-ice edge. The story below opens on the selected team's biggest upset; pick any game from the league list to read it instead.</p>
+      <p class="hr-sub">An upset is a win by a team that had under a 40% chance before the game. The chance comes from each team's points percentage going into the game, blended with last season's for the first weeks, plus a small home-ice edge. The story below opens on the picked team's biggest upset, or the season's biggest with no team picked; pick any game from the league list to read it instead.</p>
     </div>
     <article class="hr-story" id="upset-story" data-source="games ratings goals" data-draw="upsetStory"></article>
     <div>
@@ -297,6 +300,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js"></script>
+<script src="app.js?v=20261112e"></script>
 </body>
 </html>
