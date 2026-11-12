@@ -12,6 +12,13 @@
     return 'color-mix(in oklab, var(' + (v >= 5 ? '--color-ok' : '--color-bad') + ') ' + pct + '%, var(--color-panel))';
   };
   const team = () => dash.params().team || 'MTL';
+  // What a player did in one game, in a line: points for skaters, saves for goalies.
+  function statLine(r) {
+    if (r.pos === 'G') return r.SV + ' saves on ' + r.SA + ' shots · ' + r.GA + ' GA vs ' + r.xGA + ' expected · TOI ' + r.toi;
+    const a = (+r.A1 || 0) + (+r.A2 || 0), g = +r.G || 0;
+    return g + ' G, ' + a + ' A (' + (g + a) + (g + a === 1 ? ' pt' : ' pts') + ') · ' + r.SOG + ' SOG · TOI ' + r.toi;
+  }
+  const pctLine = (r) => (r.pct === '' || r.pct == null ? null : 'Better than ' + Math.round(+r.pct) + '% of ' + ({ G: 'goalie', D: 'defenseman' }[r.pos] || 'forward') + ' games this season');
   // Index a dataset once per load instead of filtering 11,000 rows on every redraw.
   const indexCache = new WeakMap();
   function groupOf(rows, name, keyFn) {
@@ -198,12 +205,10 @@
         const show = () => {
           tip.replaceChildren();
           const h = document.createElement('strong'); h.textContent = r.name + ' · ' + fmt1(v); tip.appendChild(h);
-          const sub = document.createElement('span'); sub.textContent = gameLabel(r) + ' · TOI ' + r.toi; tip.appendChild(sub);
+          const sub = document.createElement('span'); sub.textContent = gameLabel(r); tip.appendChild(sub);
           tip.appendChild(document.createElement('br'));
           const line = document.createElement('span');
-          line.textContent = r.pos === 'G'
-            ? (r.SV + ' saves on ' + r.SA + ' shots, ' + r.GA + ' GA vs ' + r.xGA + ' expected')
-            : (r.G + ' G, ' + (+r.A1 + +r.A2) + ' A, ' + r.SOG + ' SOG, ' + r.BLK + ' BLK · 5v5 attempts ' + r.CF + '–' + r.CA + ' · on-ice goals ' + r.GF + '–' + r.GA);
+          line.textContent = statLine(r) + (r.pos === 'G' ? '' : ' · 5v5 attempts ' + r.CF + '–' + r.CA + ' · on-ice goals ' + r.GF + '–' + r.GA);
           tip.appendChild(line);
           tip.hidden = false;
           const box = el.getBoundingClientRect(), c = td.getBoundingClientRect();
@@ -299,7 +304,9 @@
           const window5 = games.slice(Math.max(0, i - 4), i + 1);
           out.push({
             team: r.team, player_id: r.player_id, game_id: r.game_id, date: r.date, opp: r.opp, home: r.home,
-            result: r.result, score: r.score, rating: +r.rating,
+            result: r.result, score: r.score, rating: +r.rating, pct: r.pct,
+            pos: r.pos, toi: r.toi, G: +r.G || 0, A1: +r.A1 || 0, A2: +r.A2 || 0, SOG: r.SOG,
+            SV: r.SV, SA: r.SA, GA: r.GA, xGA: r.xGA,
             roll5: Math.round(d3.mean(window5, (x) => +x.rating) * 100) / 100,
           });
         });
@@ -513,7 +520,8 @@
     ratingChart(el, pts, {
       label: p.name + "'s rating by game this season, with a five-game rolling average",
       title: (q) => p.name + ' · ' + fmt1(q.v),
-      lines: (q) => [longDate(q.d) + ', ' + q.r.result + ' ' + q.r.score + (String(q.r.home) === 'True' ? ' vs ' : ' at ') + q.r.opp, '5-game average ' + fmt2(q.roll)],
+      lines: (q) => [longDate(q.d) + ', ' + q.r.result + ' ' + q.r.score + (String(q.r.home) === 'True' ? ' vs ' : ' at ') + q.r.opp,
+        statLine(q.r), pctLine(q.r), '5-game average ' + fmt2(q.roll)].filter(Boolean),
     });
   });
 

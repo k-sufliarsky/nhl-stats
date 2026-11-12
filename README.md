@@ -13,7 +13,7 @@ The data refreshes automatically each night after the last game finishes (see [A
 
 - **Skaters** get a Game Score (Dom Luszczyszyn's single-game metric): goals, primary and secondary assists, shots, blocks, penalties drawn and taken, faceoffs, 5-on-5 shot attempts for and against while on the ice, and goals for and against while on the ice.
 - **Goalies** are rated on goals saved above expected. Expected goals come from a small model (shot distance, angle, rebounds, turnovers) fitted on every unblocked shot of the season.
-- Each raw score is compared with every NHL game at the same position this season: `rating = 5 + 1.75 × standard deviations above average`, capped at 0 and 10. 5 is an average NHL game, 7 is good, 8.5+ is a standout night.
+- Each raw score is ranked against every NHL game at the same position this season, and the rank is placed on a bell curve centred on 5 (1.5 points per standard deviation), capped at 0 and 10. 5 is an average game, 7 beats about 91% of games, 8 about 98%, 9 about 99.6%, and 10 is reserved for a few games a season. Ranking first keeps big nights from piling up at 10, because Game Score is lopsided: most games are quiet and a few are huge.
 - **Lines** are the three forwards and two defensemen who spent the most 5-on-5 time together in a game, from the NHL's shift charts.
 - **Upsets** are wins by a team with under a 40% pre-game chance, estimated from points percentage (blended with last season's early on) plus a home-ice edge.
 
@@ -78,4 +78,4 @@ This is an independent, non-commercial fan project. It is not affiliated with, e
 - [numpy](https://numpy.org), BSD 3-Clause License (installed at run time, not included).
 - GitHub Actions `actions/checkout`, `actions/setup-python`, `actions/cache`, `actions/configure-pages`, `actions/upload-pages-artifact` and `actions/deploy-pages`, MIT License (run by GitHub, not included).
 
-**This project's own code.** The repository has no license file yet, so by default nobody else may reuse the code. To let others use it, add a `LICENSE` file (MIT is the usual choice for small projects). That license would cover the code only, not the NHL data, logos or videos described above.
+**This project's own code** is released under the [MIT License](LICENSE). That license covers the code only (`nhl_ratings.py`, `should_update.py`, the site's HTML, CSS and JavaScript and the workflow), not the NHL data, logos or videos described above.

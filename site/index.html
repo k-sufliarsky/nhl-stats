@@ -94,7 +94,7 @@
     <div class="hr-teamhead" data-source="standings logosLight logosDark" data-draw="teamTitle"></div>
     <p class="hr-lede" data-draw="teamRecord">—</p>
     <p class="hr-lede" id="takeaway"><b data-draw="leader">—</b> leads <span data-draw="teamName">—</span> with an average rating of <span data-draw="leaderAvg">—</span> across <span data-draw="games">—</span> games. In their latest game (<span data-draw="lastGame">—</span>), <b data-draw="lastBest">—</b> rated highest at <span data-draw="lastBestRating">—</span>.</p>
-    <p class="hr-sub">Every player gets a 0–10 rating for each game. 5.0 is an average NHL game for that position this season, 7 is clearly good, 8.5+ is a standout night and under 3 is a rough one.</p>
+    <p class="hr-sub">Every player gets a 0–10 rating for each game. 5.0 is an average NHL game for that position this season. 7 beats about 91% of games, 8 about 98%, 9 about 99.6%, and a 10 happens only a handful of times a season. Under 3 is a rough night.</p>
   </section>
 
   <section class="hr-sec" id="season">
@@ -284,7 +284,7 @@
     <summary>How the rating works, and where the data comes from</summary>
     <p><strong>Skaters</strong> get a Game Score, the single-game metric published by Dom Luszczyszyn: 0.75 × goals + 0.70 × primary assists + 0.55 × secondary assists + 0.075 × shots on goal + 0.05 × blocked shots + 0.15 × penalties drawn − 0.15 × penalties taken + 0.01 × faceoffs won − 0.01 × faceoffs lost + 0.05 × 5-on-5 shot attempts for on ice − 0.05 × against + 0.15 × goals for on ice − 0.15 × goals against on ice.</p>
     <p><strong>Goalies</strong> are rated on goals saved above expected: the expected goals of every unblocked shot they faced minus the goals they allowed. Expected goals come from a model fitted on about 25,000 unblocked shots from every NHL game this season, using shot distance, angle and whether it was a rebound or off a turnover.</p>
-    <p><strong>From score to 0–10:</strong> each raw score is compared with every NHL forward, defenseman or goalie game this season. The rating is 5 + 1.75 × (standard deviations above that position's average), capped at 0 and 10. A two-goal game is usually around 8; a hat trick reaches 10.</p>
+    <p><strong>From score to 0–10:</strong> each raw score is ranked against every NHL forward, defenseman or goalie game this season, and that rank is placed on a bell curve centred on 5. Ranking first matters because Game Score is lopsided: most games are quiet and a few are huge, and a straight scale sent about one forward game in sixty to a perfect 10. Now 7 means better than about 91% of games, 8 better than 98%, 9 better than 99.6%, and 10 is reserved for the very best few games of the season. A goal and an assist usually lands around 7.3, two goals around 7.7, a hat trick around 8.8.</p>
     <p><strong>Limits:</strong> ratings reward what the scoresheet and on-ice shot counts can see. Defensive positioning, zone exits and passing that never reaches the scoresheet are invisible to it, so treat one game's number as a summary, not a verdict.</p>
     <p><strong>Data and video:</strong> statistics, standings and team logos come from the NHL's public web API (boxscores, play-by-play and shift charts), documented by the community project NHL-API-Reference. Highlight links open NHL.com, which hosts the videos; nothing is copied here. This page is an independent fan project and is not affiliated with or endorsed by the NHL or its teams. NHL and team names and logos are trademarks of the NHL and its teams.</p>
   </details>

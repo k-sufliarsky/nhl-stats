@@ -6,9 +6,11 @@ Per-game 0-10 player ratings for every NHL team, built on the public NHL API
 Skaters  -> Game Score (Dom Luszczyszyn's weights) using boxscore + play-by-play + shift charts.
 Goalies  -> Goals Saved Above Expected (GSAx) from a small expected-goals model fitted on
             every unblocked shot in the NHL this season.
-Both raw scores are turned into a 0-10 rating against every NHL player-game this season
-(same game type), separately for forwards, defensemen and goalies:  rating = 5 + 1.75 * z, clipped to [0, 10].
-So 5.0 = an average NHL performance, ~7 = clearly good, ~8.5+ = standout, <3 = rough night.
+Both raw scores are ranked against every NHL player-game this season (same game type), separately for
+forwards, defensemen and goalies, and the rank is placed on a bell curve centred on 5 (1.5 points per
+standard deviation), clipped to [0, 10]. Ranking first keeps the scale honest even though Game Score is
+lopsided (a few huge nights, many quiet ones):
+    5 = average game, 7 = top ~9%, 8 = top ~2%, 9 = top ~0.4%, 10 = top ~0.05% (a few games a season).
 
 Writes, for the whole league (site/data/, which the static site reads):
     nhl_ratings.csv    one row per player per game: rating and the stats behind it
@@ -38,7 +40,7 @@ CACHE = os.path.join(HERE, "cache")
 # Game Score weights (Luszczyszyn, 2016)
 W = dict(G=0.75, A1=0.70, A2=0.55, SOG=0.075, BLK=0.05, PD=0.15, PT=-0.15,
          FOW=0.01, FOL=-0.01, CF=0.05, CA=-0.05, GF=0.15, GA=-0.15)
-SCALE = 1.75          # rating points per standard deviation
+SPREAD = 1.5          # rating points per standard deviation of the bell curve the ranks are placed on
 CORSI = {"shot-on-goal", "missed-shot", "blocked-shot", "goal"}
 FENWICK = {"shot-on-goal", "missed-shot", "goal"}
 
@@ -537,14 +539,25 @@ def main():
 
     rows = [r for gid in all_ids for r in player_rows(gid, parsed[gid], boxes[gid])]
 
-    # --- normalise to 0-10 against every player-game in the same position group
+    # --- 0-10: rank every player-game within its position group, then place the rank on a bell curve.
+    # (A straight z-score sent ~1 in 60 forward games to 10, because Game Score has a long right tail.)
+    from statistics import NormalDist
+    bell = NormalDist()
     ref = {}
     for grp in "FDG":
-        vals = [r["raw"] for r in rows if r["group"] == grp and (grp != "G" or secs(r["toi"]) >= 1200)]
-        ref[grp] = (float(np.mean(vals)), float(np.std(vals)) or 1.0)
-    for r in rows:
-        m, sd = ref[r["group"]]
-        r["rating"] = round(min(10.0, max(0.0, 5 + SCALE * (r["raw"] - m) / sd)), 1)
+        group = sorted((r for r in rows if r["group"] == grp), key=lambda r: r["raw"])
+        n = len(group)
+        ref[grp] = dict(games=n, median_raw=group[n // 2]["raw"] if n else None)
+        i = 0
+        while i < n:                                   # equal raw scores share their average rank
+            j = i
+            while j + 1 < n and group[j + 1]["raw"] == group[i]["raw"]:
+                j += 1
+            pct = ((i + j) / 2 + 0.5) / n
+            for r in group[i:j + 1]:
+                r["pct"] = round(pct * 100, 1)
+                r["rating"] = round(min(10.0, max(0.0, 5 + SPREAD * bell.inv_cdf(pct))), 1)
+            i = j + 1
 
     # --- game context for every row, from each player's own team's point of view
     by_game = defaultdict(list)
@@ -560,7 +573,7 @@ def main():
             r.update(date=box["gameDate"], opp=opp["abbrev"], home=is_home, score=f'{me["score"]}-{opp["score"]}',
                      result=res + ("" if last == "REG" else f" ({last})"))
     os.makedirs(a.out, exist_ok=True)
-    keys = ["date", "team", "opp", "home", "score", "result", "name", "pos", "toi", "rating", "raw",
+    keys = ["date", "team", "opp", "home", "score", "result", "name", "pos", "toi", "rating", "pct", "raw",
             "G", "A1", "A2", "PTS", "SOG", "ixG", "BLK", "PD", "PT", "FOW", "FOL", "CF", "CA", "GF", "GA", "PM",
             "HIT", "TK", "GV", "SA", "SV", "xGA", "svpct", "decision", "game_id", "player_id"]
     def write_csv(name, data, cols):
@@ -577,8 +590,8 @@ def main():
     standings = write_standings_and_logos(a.out)
     meta = dict(season=str(season_id), playoffs=a.playoffs, games=len(all_ids), generated=time.strftime("%Y-%m-%d"),
                 generated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), last_game_day=max(g["date"] for g in games_out),
-                reference={k: dict(mean=round(v[0], 3), sd=round(v[1], 3)) for k, v in ref.items()},
-                xg_shots=len(all_shots), xg_coef=[round(float(c), 4) for c in w], weights=W, scale=SCALE)
+                reference=ref, scale="rank -> 5 + %g * normal quantile" % SPREAD,
+                xg_shots=len(all_shots), xg_coef=[round(float(c), 4) for c in w], weights=W)
     with open(os.path.join(a.out, "nhl_meta.json"), "w") as f:
         json.dump(meta, f, indent=1)
     ups = sorted((g for g in games_out if g["upset"]), key=lambda g: g["winner_pregame_prob"])
