@@ -47,6 +47,8 @@ Then it recomputes everything, commits `site/data/`, and publishes the site to G
 
 Recap videos are sometimes posted after the update runs. Games still missing a video are checked again on the next night's run.
 
+**YouTube highlights (optional).** Each game links to the NHL's own highlights video on YouTube (youtube.com/@NHL, titled like "Flyers vs. Oilers | NHL Highlights | Nov 11, 2026"). To link straight to each video, add a free YouTube Data API key as a repository secret named `YOUTUBE_API_KEY`. In Google Cloud, enable "YouTube Data API v3", create an API key (ideally restricted to that API), then add it in Settings → Secrets and variables → Actions. Each nightly run uses a few of the 10,000 free daily quota units. Without a key, the newest games are still matched from the channel's public feed and the rest link to an exact-title YouTube search, whose other results may show scores.
+
 **One-time setup:** in the repository's Settings → Pages, set Source to **GitHub Actions**.
 
 ## Project layout
@@ -68,7 +70,7 @@ This is an independent, non-commercial fan project. It is not affiliated with, e
 
 **Team names and logos.** NHL, team names and team logos are trademarks of the National Hockey League and its teams. They appear here only to identify teams. The logos are loaded from the NHL's own logo files and stored in `site/data/logos-*.json`. On a public site this is the biggest licensing risk: remove the logos if you take the project commercial or if the NHL objects.
 
-**Videos.** Recap, condensed-game and goal clips are links to the NHL's own video player and NHL.com. No video is downloaded, copied or rehosted here.
+**Videos.** Recap, condensed-game and goal clips are links to the NHL's own video player, NHL.com and the NHL's YouTube channel. No video is downloaded, copied or rehosted here.
 
 **API documentation.** Endpoints were found with [NHL-API-Reference](https://github.com/Zmalski/NHL-API-Reference) by Zmalski, MIT License. That license covers its documentation only, not NHL data.
 

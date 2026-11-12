@@ -4,7 +4,7 @@
   const dateFmt = d3.utcFormat('%b %-d');
   const longDate = d3.utcFormat('%B %-d, %Y');
   const parseDate = d3.utcParse('%Y-%m-%d');
-  const safeUrl = (u) => (/^https:\/\/((www\.)?nhl\.com\/|players\.brightcove\.net\/6415718365001\/)/.test(u || '') ? u : null);
+  const safeUrl = (u) => (/^https:\/\/((www\.)?nhl\.com\/|players\.brightcove\.net\/6415718365001\/|www\.youtube\.com\/(watch\?v=|results\?search_query=))/.test(u || '') ? u : null);
 
   const hrColor = (v) => {
     if (v == null || isNaN(v)) return 'transparent';
@@ -834,10 +834,14 @@
       }
 
       const acts = document.createElement('div'); acts.className = 'game-acts';
-      const recap = safeUrl(r.recap_video_url), cond = safeUrl(r.condensed_video_url);
-      if (recap) { const x = link('▶ Recap', recap); x.className = 'btn btn-primary'; x.title = 'About 5 minutes, opens the NHL video player'; acts.appendChild(x); }
-      if (cond) { const x = link('Condensed', cond); x.className = 'btn'; x.title = 'About 10 minutes, opens the NHL video player'; acts.appendChild(x); }
-      if (!recap && !cond) { const n = document.createElement('span'); n.className = 'game-novid'; n.textContent = 'Video not posted yet'; acts.appendChild(n); }
+      const recap = safeUrl(r.recap_video_url), cond = safeUrl(r.condensed_video_url), yt = safeUrl(r.youtube_url);
+      const ytExact = r.youtube_exact === 'True';
+      const btn = (label, url, cls, title) => { const x = link(label, url); x.className = cls; x.title = title; acts.appendChild(x); };
+      if (yt && ytExact) btn('▶ Highlights', yt, 'btn btn-primary', 'The NHL\'s highlights on YouTube (title names only the teams)');
+      if (recap) btn(ytExact ? 'NHL recap' : '▶ Recap', recap, ytExact ? 'btn' : 'btn btn-primary', 'About 5 minutes, opens the NHL video player');
+      if (cond) btn('Condensed', cond, 'btn', 'About 10 minutes, opens the NHL video player');
+      if (yt && !ytExact) btn('YouTube', yt, 'btn', 'Searches YouTube for the NHL\'s highlights of this game. Other results may show the score.');
+      if (!recap && !cond && !yt) { const n = document.createElement('span'); n.className = 'game-novid'; n.textContent = 'Video not posted yet'; acts.appendChild(n); }
       const rv = document.createElement('button'); rv.type = 'button'; rv.className = 'btn btn-ghost';
       rv.textContent = shown ? 'Hide score' : 'Reveal score';
       rv.setAttribute('aria-label', (shown ? 'Hide' : 'Reveal') + ' the score of ' + awayName + ' at ' + homeName);

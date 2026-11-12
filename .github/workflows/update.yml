@@ -59,6 +59,10 @@ jobs:
 
       - name: Recompute ratings
         if: steps.check.outputs.update == 'true'
+        env:
+          # Optional: a YouTube Data API key (repo secret) gives each game an exact link to the NHL's YouTube highlights.
+          # Without it, games link to an exact-title YouTube search instead.
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           pip install -r requirements.txt
           python nhl_ratings.py

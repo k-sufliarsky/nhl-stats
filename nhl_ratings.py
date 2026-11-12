@@ -306,7 +306,12 @@ def game_videos(gid):
 
 
 def league_games(ids, boxes, pbps, by_game, gtype):
+    import urllib.parse
     games, goals = [], []
+    team_names = {gid: (boxes[gid]["awayTeam"].get("commonName", {}).get("default", boxes[gid]["awayTeam"]["abbrev"]),
+                   boxes[gid]["homeTeam"].get("commonName", {}).get("default", boxes[gid]["homeTeam"]["abbrev"]))
+             for gid in ids}
+    youtube = youtube_highlights({(team_names[g][0], team_names[g][1], boxes[g]["gameDate"]): g for g in ids})
     with ThreadPoolExecutor(12) as ex:
         videos = dict(zip(ids, ex.map(game_videos, ids)))
     for gid in ids:
@@ -335,7 +340,11 @@ def league_games(ids, boxes, pbps, by_game, gtype):
             winner_star=best.get(win["abbrev"], {}).get("name", ""), winner_star_rating=best.get(win["abbrev"], {}).get("rating", ""),
             loser_star=best.get(lose["abbrev"], {}).get("name", ""), loser_star_rating=best.get(lose["abbrev"], {}).get("rating", ""),
             gamecenter_url=gc, start_utc=box.get("startTimeUTC", ""), venue=(box.get("venue") or {}).get("default", ""),
-            recap_video_url=videos[gid][0], condensed_video_url=videos[gid][1]))
+            recap_video_url=videos[gid][0], condensed_video_url=videos[gid][1],
+            youtube_url=(f"https://www.youtube.com/watch?v={youtube[gid]}" if gid in youtube else
+                         "https://www.youtube.com/results?search_query=" + urllib.parse.quote(
+                             '"' + yt_title(team_names[gid][0], team_names[gid][1], box["gameDate"]) + '"')),
+            youtube_exact=gid in youtube))
         names = {r["playerId"]: f'{r["firstName"]["default"]} {r["lastName"]["default"]}' for r in pbp.get("rosterSpots", [])}
         abbr = {h["id"]: h["abbrev"], aw["id"]: aw["abbrev"]}
         for pl in pbp["plays"]:
@@ -485,6 +494,96 @@ def lines_for_game(gid, box, pbp, shifts, rating_of):
                         unit_rating=round(sum(rs) / len(rs), 2) if rs else ""))
     return out
 
+
+
+
+# ----------------------------------------------------------------------------- YouTube highlights
+YT_UPLOADS = "UUqFMzb-4AUf6WAIbl132QKA"   # uploads playlist of the NHL's main channel, youtube.com/@NHL
+YT_TITLE = re.compile(r"^(.+?) (?:vs\.?|at|@) (.+?) \| NHL Highlights \| ([A-Za-z]{3,9}\.? \d{1,2}, \d{4})")
+
+
+def yt_title(away, home, date):
+    """The NHL's own title for a game's highlights, e.g. 'Flyers vs. Oilers | NHL Highlights | Nov 11, 2026'."""
+    import datetime as dt
+    d = dt.date.fromisoformat(date)
+    return f"{away} vs. {home} | NHL Highlights | {d:%b} {d.day}, {d.year}"
+
+
+def youtube_highlights(wanted):
+    """wanted: {(away name, home name, date): game_id}. Returns {game_id: video_id} for games found on youtube.com/@NHL.
+
+    Uses the YouTube Data API (env YOUTUBE_API_KEY) to page through the channel's uploads; about 1 quota unit per
+    50 videos. Found ids are kept in cache/youtube_highlights.json so each game is only looked up until it's found.
+    Without a key nothing is looked up and the site falls back to an exact-title YouTube search link."""
+    import datetime as dt, urllib.parse
+    path = os.path.join(CACHE, "youtube_highlights.json")
+    known = json.load(open(path)) if os.path.exists(path) else {}
+    key = os.environ.get("YOUTUBE_API_KEY", "").strip()
+    missing = {k: g for k, g in wanted.items() if str(g) not in known}
+
+    def match(title, video_id, lookup):
+        m = YT_TITLE.match(title)
+        if not m:
+            return
+        raw = m.group(3).replace(".", "").replace("Sept ", "Sep ")
+        for fmt in ("%b %d, %Y", "%B %d, %Y"):
+            try:
+                day = dt.datetime.strptime(raw, fmt).date().isoformat()
+                break
+            except ValueError:
+                day = None
+        g = lookup.get((m.group(1).strip().lower(), m.group(2).strip().lower(), day))
+        if g and video_id:
+            known[str(g)] = video_id
+
+    lookup = {}
+    for (a, h, d), g in missing.items():
+        lookup[(a.lower(), h.lower(), d)] = g
+        lookup[(h.lower(), a.lower(), d)] = g              # in case a title lists the home team first
+
+    # Free and keyless, but only the channel's last 15 uploads: catches the newest games.
+    if missing:
+        try:
+            feed = urllib.request.urlopen(urllib.request.Request(
+                "https://www.youtube.com/feeds/videos.xml?channel_id=UC" + YT_UPLOADS[2:],
+                headers={"User-Agent": "nhl-ratings/1.0"}), timeout=30).read().decode("utf-8", "replace")
+            import html
+            for vid, title in re.findall(r"<yt:videoId>(.*?)</yt:videoId>.*?<title>(.*?)</title>", feed, re.S):
+                match(html.unescape(title), vid, lookup)
+        except Exception as e:
+            print(f"YouTube feed skipped: {type(e).__name__}", file=sys.stderr)
+        missing = {k: g for k, g in missing.items() if str(g) not in known}
+
+    if key and missing:
+        oldest = min(dt.date.fromisoformat(k[2]) for k in missing) - dt.timedelta(days=1)
+        token, pages = "", 0
+        while pages < 80:
+            q = dict(part="snippet", playlistId=YT_UPLOADS, maxResults=50, key=key)
+            if token:
+                q["pageToken"] = token
+            try:
+                req = urllib.request.Request("https://www.googleapis.com/youtube/v3/playlistItems?" + urllib.parse.urlencode(q),
+                                             headers={"User-Agent": "nhl-ratings/1.0"})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    page = json.load(r)
+            except Exception as e:                             # never print the request URL: it holds the key
+                print(f"YouTube lookup stopped: {type(e).__name__} {getattr(e, 'code', '')}", file=sys.stderr)
+                break
+            pages += 1
+            done = False
+            for item in page.get("items", []):
+                sn = item.get("snippet", {})
+                match(sn.get("title", ""), sn.get("resourceId", {}).get("videoId", ""), lookup)
+                if sn.get("publishedAt", "9999")[:10] < oldest.isoformat():
+                    done = True
+            token = page.get("nextPageToken")
+            if done or not token:
+                break
+    os.makedirs(CACHE, exist_ok=True)
+    json.dump(known, open(path, "w"))
+    print(f"YouTube highlights: {sum(str(g) in known for g in wanted.values())}/{len(wanted)} games have an exact link"
+          + ("" if key else " (no YOUTUBE_API_KEY: the rest link to a YouTube search)"), file=sys.stderr)
+    return {int(g): v for g, v in known.items() if v}
 
 
 # ----------------------------------------------------------------------------- upcoming games
