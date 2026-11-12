@@ -1,0 +1,104 @@
+name: Update data and publish site
+
+# Every 30 minutes from 02:00 to 13:30 UTC (9 PM to 8:30 AM US Eastern), a quick check asks:
+# has the last game day finished, and has it been HOURS_AFTER_LAST_START hours since its last game started?
+# Only then does the full update run: recompute ratings, commit the new data, publish the site.
+# Pushes to main that change the site or the scripts publish too.
+on:
+  schedule:
+    - cron: "*/30 2-13 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Update now, even if nothing new has finished"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ["site/**", "nhl_ratings.py", ".github/workflows/update.yml"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-and-publish
+  cancel-in-progress: false
+
+env:
+  # How long after the day's last game starts to update. Games take about 2.5 hours; raise or lower to taste.
+  HOURS_AFTER_LAST_START: "3"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Is there a finished game day to process?
+        id: check
+        if: github.event_name != 'push'
+        env:
+          FORCE: ${{ github.event.inputs.force || 'false' }}
+        run: python should_update.py
+
+      - name: Restore NHL API cache
+        if: steps.check.outputs.update == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: cache
+          key: nhl-api-${{ github.run_id }}
+          restore-keys: nhl-api-
+
+      - name: Recompute ratings
+        if: steps.check.outputs.update == 'true'
+        run: |
+          pip install -r requirements.txt
+          python nhl_ratings.py
+
+      - name: Save NHL API cache
+        if: steps.check.outputs.update == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: cache
+          key: nhl-api-${{ github.run_id }}
+
+      - name: Commit new data
+        id: commit
+        if: steps.check.outputs.update == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Update data through ${{ steps.check.outputs.game_day }}"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: update
+    if: github.event_name == 'push' || needs.update.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

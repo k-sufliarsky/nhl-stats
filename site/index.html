@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NHL Game Ratings</title>
+<meta name="description" content="Per-game 0-10 ratings for every NHL player, spoiler-free latest games, standings, trends and line combinations.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='20' rx='12' ry='5' fill='%23141a23'/%3E%3Crect x='4' y='14' width='24' height='6' fill='%23141a23'/%3E%3Cellipse cx='16' cy='14' rx='12' ry='5' fill='%23394456'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="app.css">
+<script src="vendor/d3.min.js"></script>
+<script src="runtime.js"></script>
+</head>
+<body>
+<main id="dash-root">
+<div class="hr">
+  <header id="top">
+    <h1>NHL Game Ratings</h1>
+    <p class="hr-updated" data-draw="updatedAt">—</p>
+    <div class="hr-tabs" role="tablist" aria-label="Views">
+      <button type="button" class="hr-tab" role="tab" id="tab-latest" data-tab="latest" aria-controls="latest" aria-selected="true">Latest games</button>
+      <button type="button" class="hr-tab" role="tab" id="tab-stats" data-tab="stats" aria-controls="stats" aria-selected="false">Teams and ratings</button>
+    </div>
+  </header>
+
+  <section class="hr-sec" id="latest" role="tabpanel" aria-labelledby="tab-latest">
+    <div>
+      <h2>Latest games</h2>
+      <p class="hr-sub">Spoiler-free: scores stay hidden until you reveal them. Recap and condensed-game videos open in the NHL's own video player, and their titles name only the teams. Click a team to open its stats; note that the stats pages do show results.</p>
+    </div>
+    <div class="hr-pick">
+      <label for="hr-day">Game day</label>
+      <select id="hr-day" class="dash-select" data-draw="dayPick" aria-label="Game day" data-source="games"></select>
+      <button type="button" class="hr-btn" id="hr-reveal-all">Reveal all scores</button>
+      <button type="button" class="hr-btn" id="hr-hide-all" hidden>Hide all scores</button>
+    </div>
+    <div class="hr-cards" data-source="games standings logosLight logosDark" data-draw="latestGames"></div>
+  </section>
+
+  <div class="hr-panel" id="stats" role="tabpanel" aria-labelledby="tab-stats" hidden>
+  <p class="hr-sub">Pick a team by its logo. Every section below follows the team you pick.</p>
+
+  <section class="hr-sec" id="teams" aria-label="Teams by conference and division">
+    <div class="hr-confs" data-source="standings logosLight logosDark" data-draw="teamGrid"></div>
+  </section>
+
+  <div class="hr-standbar">
+    <button type="button" class="hr-btn" id="hr-show-stand" aria-controls="standings" hidden>Show league standings</button>
+  </div>
+
+  <section class="hr-sec" id="standings">
+    <div class="hr-standhead">
+      <h2>Season standings</h2>
+      <button type="button" class="hr-btn" id="hr-hide-stand" aria-controls="standings">Hide</button>
+    </div>
+    <div>
+      <p class="hr-sub">Picking a team hides this table; bring it back with Show league standings. Ranked by points, the NHL's own order. P% is points percentage; RW is regulation wins; L10 is the last ten games. The line marks the playoff cut: the top three in each division go through, plus two wild cards per conference (the next two best teams, whatever their division). The conference view lays this out the way the NHL does. Click a team to open it.</p>
+    </div>
+    <div class="hr-toggle" role="group" aria-label="Group standings by">
+      <button type="button" class="hr-tog" data-view="division" aria-pressed="true">Division</button>
+      <button type="button" class="hr-tog" data-view="conference" aria-pressed="false">Conference</button>
+      <button type="button" class="hr-tog" data-view="league" aria-pressed="false">League</button>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full hr-stand" data-source="standings" data-row-key="team" aria-label="Season standings">
+        <thead><tr>
+          <th data-draw="rankHead">—</th>
+          <th class="l" data-field="name">Team</th>
+          <th data-field="gp">GP</th>
+          <th data-field="w">W</th>
+          <th data-field="l">L</th>
+          <th data-field="otl">OTL</th>
+          <th data-field="pts">PTS</th>
+          <th data-field="pts_pct">P%</th>
+          <th data-field="rw">RW</th>
+          <th data-field="gf">GF</th>
+          <th data-field="ga">GA</th>
+          <th data-field="diff">Diff</th>
+          <th data-field="home">Home</th>
+          <th data-field="road">Road</th>
+          <th data-field="l10">L10</th>
+          <th data-field="streak">Streak</th>
+        </tr></thead>
+        <tbody data-draw="standingsRows"></tbody>
+      </table>
+    </div>
+    <p class="hr-sub" data-draw="standingsAsOf">—</p>
+  </section>
+
+  <section class="hr-sec" id="team">
+    <div class="hr-teamhead" data-source="standings logosLight logosDark" data-draw="teamTitle"></div>
+    <p class="hr-lede" data-draw="teamRecord">—</p>
+    <p class="hr-lede" id="takeaway"><b data-draw="leader">—</b> leads <span data-draw="teamName">—</span> with an average rating of <span data-draw="leaderAvg">—</span> across <span data-draw="games">—</span> games. In their latest game (<span data-draw="lastGame">—</span>), <b data-draw="lastBest">—</b> rated highest at <span data-draw="lastBestRating">—</span>.</p>
+    <p class="hr-sub">Every player gets a 0–10 rating for each game. 5.0 is an average NHL game for that position this season, 7 is clearly good, 8.5+ is a standout night and under 3 is a rough one.</p>
+  </section>
+
+  <section class="hr-sec" id="season">
+    <div>
+      <h2>Season averages</h2>
+      <p class="hr-sub">Players ranked by their average per-game rating for this team. Last 5 is the average of their five most recent games. Click a player to see their trend.</p>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full hr-season" data-source="season" data-row-key="team,player_id" aria-label="Season average ratings by player">
+        <thead><tr>
+          <th class="l" data-field="name">Player</th>
+          <th class="l" data-field="pos">Pos</th>
+          <th data-field="gp">GP</th>
+          <th data-field="avg">Avg</th>
+          <th data-field="last5">Last 5</th>
+          <th data-field="best">Best</th>
+          <th data-field="worst">Worst</th>
+        </tr></thead>
+        <tbody data-draw="seasonRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="hr-sec" id="trends">
+    <div>
+      <h2>Trends</h2>
+      <p class="hr-sub">How ratings move through the season. Dots are single games. The line is the five-game rolling average, which smooths out one-off nights so the direction is easier to see. The dashed line at 5 is an average NHL game.</p>
+    </div>
+
+    <div class="hr-trend-grid" id="team-trend">
+      <h3>Team</h3>
+      <p class="hr-lede" data-draw="teamTrendText">—</p>
+      <div class="hr-key" aria-hidden="true">
+        <span><i class="hr-sw hr-sw-win"></i>Win</span>
+        <span><i class="hr-sw hr-sw-loss"></i>Loss</span>
+        <span><i class="hr-sw hr-sw-roll"></i>5-game average</span>
+        <span><i class="hr-sw hr-sw-ref"></i>League average</span>
+      </div>
+      <div class="hr-chart" data-source="teamGames" data-draw="teamChart"></div>
+      <p class="hr-sub">Team rating is the average of its skaters' ratings in that game, weighted by ice time, so a 25-minute defenseman counts more than a 9-minute fourth-liner.</p>
+    </div>
+
+    <div class="hr-trend-grid" id="player-trend">
+      <h3>Player</h3>
+      <div class="hr-players" data-source="season" data-draw="playerGrid"></div>
+      <p class="hr-lede" data-draw="playerText">—</p>
+      <div class="hr-key" aria-hidden="true">
+        <span><i class="hr-sw hr-sw-dot"></i>Single game</span>
+        <span><i class="hr-sw hr-sw-roll"></i>5-game average</span>
+        <span><i class="hr-sw hr-sw-ref"></i>League average</span>
+      </div>
+      <div class="hr-chart" data-source="rolling" data-draw="playerChart"></div>
+    </div>
+
+    <div class="hr-trend-grid" id="hot">
+      <h3>Who's trending</h3>
+      <p class="hr-sub">Each player's last five games against their season average, for players with at least six games. The sparkline shows their last ten games. Click a player to chart them.</p>
+      <div class="hr-scroll">
+        <table class="hr-full hr-hot" data-source="season" data-row-key="team,player_id" aria-label="Players trending up and down">
+          <thead><tr>
+            <th class="l" data-field="name">Player</th>
+            <th class="l" data-field="pos">Pos</th>
+            <th data-field="gp">GP</th>
+            <th data-field="avg">Season</th>
+            <th data-field="last5">Last 5</th>
+            <th data-field="delta">Change</th>
+            <th class="l">Last 10</th>
+          </tr></thead>
+          <tbody data-draw="hotRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="hr-sec" id="lines">
+    <div>
+      <h2>Line combinations</h2>
+      <p class="hr-sub">Forward lines and defense pairs worked out from the NHL's shift charts: the three forwards and two defensemen who spent the most 5-on-5 time on the ice together in each game. Line rating is the average of its players' game ratings. Shots and goals are 5-on-5, counted only while that exact unit was on the ice. CF% is the unit's share of those shot attempts.</p>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full hr-hot" data-source="lineSeason" data-row-key="team,player_ids" aria-label="Most-used line combinations this season">
+        <thead><tr>
+          <th class="l" data-field="names">Unit</th>
+          <th data-field="games">GP</th>
+          <th data-field="toi_min">5v5 min</th>
+          <th data-field="CF">CF</th>
+          <th data-field="CA">CA</th>
+          <th data-field="cf_pct">CF%</th>
+          <th data-field="GF">GF</th>
+          <th data-field="GA">GA</th>
+          <th data-field="avg_rating">Line rating</th>
+        </tr></thead>
+        <tbody data-draw="lineRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="hr-sec" id="grid">
+    <div>
+      <h2>Game by game</h2>
+      <p class="hr-sub">Each cell is one player's rating in one game, oldest game on the left. Point at or tap a cell for the stats behind it.</p>
+    </div>
+    <div class="hr-legend" aria-hidden="true" data-draw="legend"></div>
+    <div class="hr-scroll hr-heat" data-source="ratings" data-draw="heat"></div>
+  </section>
+
+  <section class="hr-sec" id="game">
+    <div>
+      <h2>One game in detail</h2>
+      <p class="hr-sub">Pick a game to see every player's rating and the stats it was built from. CF/CA are shot attempts for and against while the player was on the ice at 5-on-5; GF/GA are goals for and against while on the ice; PD/PT are penalties drawn and taken; ixG is the expected goals of the player's own shots.</p>
+    </div>
+    <div class="hr-pick">
+      <label for="hr-game">Game</label>
+      <select id="hr-game" class="dash-select" data-draw="gamePick" aria-label="Game" data-source="ratings"></select>
+      <span data-draw="gameLinks">—</span>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full" data-source="ratings" data-row-key="game_id,player_id" aria-label="Skater ratings for the selected game">
+        <thead><tr>
+          <th class="l" data-field="name">Skater</th>
+          <th class="l" data-field="pos">Pos</th>
+          <th data-field="toi">TOI</th>
+          <th data-field="rating">Rating</th>
+          <th data-field="G">G</th>
+          <th data-field="A1">A1</th>
+          <th data-field="A2">A2</th>
+          <th data-field="SOG">SOG</th>
+          <th data-field="ixG">ixG</th>
+          <th data-field="BLK">BLK</th>
+          <th data-field="CF">CF</th>
+          <th data-field="CA">CA</th>
+          <th data-field="GF">GF</th>
+          <th data-field="GA">GA</th>
+          <th data-field="PD">PD</th>
+          <th data-field="PT">PT</th>
+          <th data-field="FOW">FOW</th>
+          <th data-field="FOL">FOL</th>
+        </tr></thead>
+        <tbody data-draw="gameSkaters"></tbody>
+      </table>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full" data-source="ratings" data-row-key="game_id,player_id" aria-label="Goalie ratings for the selected game">
+        <thead><tr>
+          <th class="l" data-field="name">Goalie</th>
+          <th data-field="toi">TOI</th>
+          <th data-field="rating">Rating</th>
+          <th data-field="SA">Shots against</th>
+          <th data-field="SV">Saves</th>
+          <th data-field="GA">Goals against</th>
+          <th data-field="xGA">Expected GA</th>
+          <th data-field="decision">Decision</th>
+        </tr></thead>
+        <tbody data-draw="gameGoalies"></tbody>
+      </table>
+    </div>
+    <h3>Lines in this game</h3>
+    <div class="hr-lines" data-source="lines ratings" data-draw="gameLines"></div>
+  </section>
+
+  <section class="hr-sec" id="upsets">
+    <div>
+      <h2>Upsets</h2>
+      <p class="hr-sub">An upset is a win by a team that had under a 40% chance before the game. The chance comes from each team's points percentage going into the game, blended with last season's for the first weeks, plus a small home-ice edge. The story below opens on the selected team's biggest upset; pick any game from the league list to read it instead.</p>
+    </div>
+    <article class="hr-story" id="upset-story" data-source="games ratings goals" data-draw="upsetStory"></article>
+    <div>
+      <h3>Biggest upsets this season</h3>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full" data-source="games" data-row-key="game_id" aria-label="Biggest upsets of the season">
+        <thead><tr>
+          <th class="l" data-field="date">Date</th>
+          <th class="l" data-field="winner">Winner</th>
+          <th class="l" data-field="final">Score</th>
+          <th class="l" data-field="loser">Beat</th>
+          <th data-field="winner_pregame_pct">Win chance %</th>
+          <th class="l" data-field="winner_star">Winner's best</th>
+          <th class="l">Story</th>
+        </tr></thead>
+        <tbody data-draw="upsetRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details id="method">
+    <summary>How the rating works, and where the data comes from</summary>
+    <p><strong>Skaters</strong> get a Game Score, the single-game metric published by Dom Luszczyszyn: 0.75 × goals + 0.70 × primary assists + 0.55 × secondary assists + 0.075 × shots on goal + 0.05 × blocked shots + 0.15 × penalties drawn − 0.15 × penalties taken + 0.01 × faceoffs won − 0.01 × faceoffs lost + 0.05 × 5-on-5 shot attempts for on ice − 0.05 × against + 0.15 × goals for on ice − 0.15 × goals against on ice.</p>
+    <p><strong>Goalies</strong> are rated on goals saved above expected: the expected goals of every unblocked shot they faced minus the goals they allowed. Expected goals come from a model fitted on about 25,000 unblocked shots from every NHL game this season, using shot distance, angle and whether it was a rebound or off a turnover.</p>
+    <p><strong>From score to 0–10:</strong> each raw score is compared with every NHL forward, defenseman or goalie game this season. The rating is 5 + 1.75 × (standard deviations above that position's average), capped at 0 and 10. A two-goal game is usually around 8; a hat trick reaches 10.</p>
+    <p><strong>Limits:</strong> ratings reward what the scoresheet and on-ice shot counts can see. Defensive positioning, zone exits and passing that never reaches the scoresheet are invisible to it, so treat one game's number as a summary, not a verdict.</p>
+    <p><strong>Data and video:</strong> statistics, standings and team logos come from the NHL's public web API (boxscores, play-by-play and shift charts), documented by the community project NHL-API-Reference. Highlight links open NHL.com, which hosts the videos; nothing is copied here. This page is an independent fan project and is not affiliated with or endorsed by the NHL or its teams. NHL and team names and logos are trademarks of the NHL and its teams.</p>
+  </details>
+  </div>
+</div>
+
+<footer class="site-foot">
+  Independent fan project, not affiliated with or endorsed by the NHL or its teams. Statistics, standings, logos and video links come from the NHL's public web API.
+  NHL, team names and logos are trademarks of the NHL and its teams. Videos play on NHL's own player; nothing is copied here.
+  <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
+</footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

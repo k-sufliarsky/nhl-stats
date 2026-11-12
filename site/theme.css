@@ -1,0 +1,109 @@
+/* Design tokens for the static site. The page styles (app.css) use only these names. */
+:root {
+  color-scheme: light;
+  --color-bg: #f4f6f9;
+  --color-panel: #ffffff;
+  --color-fg: #141a23;
+  --color-fg-muted: #5b6676;
+  --color-border-line: #dde2ea;
+  --color-ok: #1f8a4c;
+  --color-warn: #c98a0b;
+  --color-bad: #c43c3c;
+  --series-1: #1f5fbf;
+  --series-2: #d9822b;
+  --series-3: #7b56c7;
+  --series-4: #2a9d8f;
+
+  --font-anthropic-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-anthropic-serif: "Source Serif 4", ui-serif, Georgia, "Times New Roman", serif;
+  --cds-font-size-caption: 12px;
+  --cds-font-size-body: 14px;
+  --cds-font-size-heading: 18px;
+  --cds-font-size-title: 32px;
+  --cds-font-weight-medium: 600;
+
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 20px; --cds-gap-xl: 32px;
+  --cds-pad-xs: 4px; --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 16px; --cds-pad-xl: 24px;
+  --cds-radius: 8px;
+
+  --cds-chart-muted: #c3cad6;
+  --cds-chart-grid: #e8ecf2;
+  --cds-chart-axis: #c3cad6;
+  --cds-chart-reference: #8a94a6;
+  --cds-chart-status-critical: #c43c3c;
+  --cds-text-secondary: #5b6676;
+  --cds-surface-popover: #ffffff;
+  --cds-border: #d3d9e3;
+  --cds-shadow-popover: 0 6px 24px rgba(20, 26, 35, .14);
+  --cds-dur-slow: 400ms;
+  --cds-ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #0f141b;
+    --color-panel: #171e28;
+    --color-fg: #e8edf4;
+    --color-fg-muted: #9aa5b5;
+    --color-border-line: #2a3442;
+    --color-ok: #3fb96f;
+    --color-warn: #e0a531;
+    --color-bad: #e5615f;
+    --series-1: #6ea2ff;
+    --series-2: #f0a35e;
+    --series-3: #a98bf0;
+    --series-4: #4cc3b4;
+    --cds-chart-muted: #3a4555;
+    --cds-chart-grid: #232c38;
+    --cds-chart-axis: #3a4555;
+    --cds-chart-reference: #7d889a;
+    --cds-text-secondary: #9aa5b5;
+    --cds-surface-popover: #1d2531;
+    --cds-border: #323d4c;
+    --cds-shadow-popover: 0 6px 24px rgba(0, 0, 0, .5);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0f141b; --color-panel: #171e28; --color-fg: #e8edf4; --color-fg-muted: #9aa5b5; --color-border-line: #2a3442;
+  --color-ok: #3fb96f; --color-warn: #e0a531; --color-bad: #e5615f;
+  --series-1: #6ea2ff; --series-2: #f0a35e; --series-3: #a98bf0; --series-4: #4cc3b4;
+  --cds-chart-muted: #3a4555; --cds-chart-grid: #232c38; --cds-chart-axis: #3a4555; --cds-chart-reference: #7d889a;
+  --cds-text-secondary: #9aa5b5; --cds-surface-popover: #1d2531; --cds-border: #323d4c; --cds-shadow-popover: 0 6px 24px rgba(0, 0, 0, .5);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font: 400 var(--cds-font-size-body)/1.45 var(--font-anthropic-sans);
+}
+#dash-root {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+img { max-width: 100%; }
+.dash-select {
+  font: inherit;
+  color: var(--color-fg);
+  background-color: var(--color-panel);
+  border: 1px solid var(--color-border-line);
+  border-radius: var(--cds-radius);
+  padding: 6px 30px 6px 10px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a94a6' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  max-width: 100%;
+}
+.dash-select:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 1px; }
+.site-foot { margin-top: 40px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.6; }
+.site-foot a { color: inherit; }
+.hr-updated { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 6px 0 0; }
