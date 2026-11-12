@@ -371,15 +371,11 @@ def fetch_bytes(url, cache_key):
 
 
 def svg_data_url(svg):
-    """Strip comments, round coordinates to 0.1 (invisible at logo size) and URL-encode: much smaller than base64."""
+    """Strip comments and whitespace and URL-encode (smaller than base64). Coordinates are left exactly as drawn:
+    rounding them can merge neighbouring numbers in path data and break the logo."""
     import urllib.parse
     svg = re.sub(r"<!--.*?-->|<\?xml.*?\?>|<metadata.*?</metadata>", "", svg, flags=re.S)
     svg = re.sub(r">\s+<", "><", svg).strip()
-    def num(m):
-        v = ("%.1f" % round(float(m.group(0)), 1)).rstrip("0").rstrip(".")
-        v = v.replace("-0.", "-.") if v.startswith("-0.") else (v[1:] if v.startswith("0.") else v)
-        return "0" if v in ("", "-0", "-") else v
-    svg = re.sub(r"-?\d*\.\d+", num, svg)
     return "data:image/svg+xml," + urllib.parse.quote(svg, safe=" /=:;,.-_'()!*~[]?@$")
 
 

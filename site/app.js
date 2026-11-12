@@ -14,11 +14,20 @@
   const team = () => dash.params().team || '';
   // Sections that need a team: hidden until one is picked, with a hint in their place.
   const TEAM_SECTIONS = ['team', 'team-trend', 'grid', 'game'];   // the rest switch to league-wide views
+  let pickerOpen = false;
   function syncTeamSections() {
     const has = !!team();
     const setHidden = (el, want) => { if (el && el.hidden !== want) el.hidden = want; };   // only touch it when it changes
     TEAM_SECTIONS.forEach((id) => setHidden(document.getElementById(id), !has));
     setHidden(document.getElementById('hr-no-team'), has);
+    document.querySelectorAll('.sec-nav [data-needs-team]').forEach((a) => setHidden(a, !has));
+    setHidden(document.getElementById('teams'), has && !pickerOpen);
+    document.querySelectorAll('.hr-season').forEach((t) => t.classList.toggle('one-team', has));   // team column only in the league view
+  }
+  function togglePicker(open) {
+    pickerOpen = open;
+    syncTeamSections();
+    dash.draw('teamBar');
   }
   // One shared tooltip on top of the page. Fixed to the window so scrolling tables and chart edges can't cut it off;
   // it opens below the point, or above it when there isn't room below.
@@ -756,11 +765,11 @@
   });
 
   function openTeamStats(code) {
+    pickerOpen = false;
     dash.setParams({ team: code });
     syncTeamSections();
     showTab('stats');
-    showStandings(false);
-    const s = document.getElementById('team');
+    const s = document.getElementById('stats');
     if (s) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
   }
 
@@ -779,52 +788,147 @@
     for (const r of d3.sort(day[1], (x) => x.start_utc, (x) => x.game_id)) {
       const shown = reveal.all || reveal.ids.has(r.game_id);
       const W = 'game_id=' + r.game_id;
-      const card = document.createElement('article'); card.className = 'hr-card';
-      card.setAttribute('aria-label', (names.get(r.away) || r.away) + ' at ' + (names.get(r.home) || r.home));
-      const match = document.createElement('div'); match.className = 'hr-match';
-      for (const [code, field] of [[r.away, 'away_score'], [r.home, 'home_score']]) {
-        const tm = document.createElement('button');
-        tm.type = 'button';
-        tm.className = 'tm' + (shown ? (code === r.winner ? ' win' : ' lose') : '');
-        tm.setAttribute('aria-label', 'Open ' + (names.get(code) || code) + ' stats');
-        tm.title = 'Open team stats (shows results)';
-        tm.addEventListener('click', () => openTeamStats(code));
-        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = names.get(code) || code;
-        tm.append(logo(code, dark), nm);
-        if (shown) { const sc = mark('span', 'games', field, W, r[field]); sc.className = 'sc'; tm.appendChild(sc); }
-        match.appendChild(tm);
-      }
+      const awayName = names.get(r.away) || r.away, homeName = names.get(r.home) || r.home;
+      const card = document.createElement('article');
+      card.className = 'game' + (shown ? ' is-shown' : '');
+      card.setAttribute('aria-label', awayName + ' at ' + homeName);
+
+      const top = document.createElement('header'); top.className = 'game-top';
       const start = r.start_utc ? new Date(r.start_utc) : null;
-      const meta = document.createElement('div'); meta.className = 'meta';
-      meta.textContent = (start && !isNaN(start) ? timeFmt(start) + ' your time' : '') + (r.venue ? ' · ' + r.venue : '');
-      card.append(match, meta);
+      const time = document.createElement('span'); time.className = 'game-time';
+      time.textContent = start && !isNaN(start) ? timeFmt(start) : '';
+      const where = document.createElement('span'); where.className = 'game-venue'; where.textContent = r.venue || '';
+      const state = document.createElement('span'); state.className = 'game-state';
+      state.textContent = shown ? (r.ended === 'REG' ? 'Final' : 'Final/' + r.ended) : 'Final';
+      top.append(time, where, state);
+      card.appendChild(top);
+
+      for (const [code, field, side] of [[r.away, 'away_score', 'Away'], [r.home, 'home_score', 'Home']]) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'game-team' + (shown ? (code === r.winner ? ' win' : ' lose') : '');
+        row.setAttribute('aria-label', 'Open ' + (names.get(code) || code) + ' stats (shows results)');
+        row.title = 'Open team stats (shows results)';
+        row.addEventListener('click', () => openTeamStats(code));
+        const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = names.get(code) || code;
+        const tag = document.createElement('span'); tag.className = 'side'; tag.textContent = side;
+        const sc = shown ? mark('span', 'games', field, W, r[field]) : document.createElement('span');
+        sc.className = 'sc' + (shown ? '' : ' is-hidden');
+        if (!shown) { sc.textContent = '–'; sc.setAttribute('aria-label', 'score hidden'); }
+        row.append(logo(code, dark), nm, tag, sc);
+        card.appendChild(row);
+      }
 
       if (shown) {
-        const res = document.createElement('div'); res.className = 'hr-res';
-        res.append(r.ended === 'REG' ? 'Final' : 'Final (' + r.ended + ')');
+        const res = document.createElement('div'); res.className = 'game-notes';
         if (r.upset === 'True') {
           const b = document.createElement('span'); b.className = 'hr-badge'; b.textContent = 'Upset';
-          res.append(' · ', b, ' ' + r.winner + ' had a ', mark('span', 'games', 'winner_pregame_pct', W, r.winner_pregame_pct), '% chance');
+          const up = document.createElement('div');
+          up.append(b, ' ' + r.winner + ' had a ', mark('span', 'games', 'winner_pregame_pct', W, r.winner_pregame_pct), '% chance');
+          res.appendChild(up);
         }
-        res.append(document.createElement('br'), 'Best rated: ' + r.winner_star + ' ', mark('b', 'games', 'winner_star_rating', W, r.winner_star_rating),
-          ' (' + r.winner + ') · ' + r.loser_star + ' ', mark('b', 'games', 'loser_star_rating', W, r.loser_star_rating), ' (' + r.loser + ')');
+        const stars = document.createElement('div');
+        stars.append('Stars: ' + r.winner_star + ' ', chip(+r.winner_star_rating), '  ' + r.loser_star + ' ', chip(+r.loser_star_rating));
+        res.appendChild(stars);
         card.appendChild(res);
-      } else {
-        const veil = document.createElement('div'); veil.className = 'hr-veil';
-        const t = document.createElement('span'); t.textContent = 'Score hidden';
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'hr-btn'; b.textContent = 'Reveal score';
-        b.setAttribute('aria-label', 'Reveal the score of ' + (names.get(r.away) || r.away) + ' at ' + (names.get(r.home) || r.home));
-        b.addEventListener('click', () => { reveal.ids.add(r.game_id); dash.draw('latestGames'); });
-        veil.append(t, b); card.appendChild(veil);
       }
 
-      const acts = document.createElement('div'); acts.className = 'hr-acts';
+      const acts = document.createElement('div'); acts.className = 'game-acts';
       const recap = safeUrl(r.recap_video_url), cond = safeUrl(r.condensed_video_url);
-      if (recap) { const a = link('Watch recap', recap); a.className = 'hr-btn'; acts.appendChild(a); }
-      if (cond) { const a = link('Condensed game', cond); a.className = 'hr-btn'; acts.appendChild(a); }
-      if (!recap && !cond) { const n = document.createElement('span'); n.className = 'meta'; n.textContent = 'Video not posted yet'; acts.appendChild(n); }
+      if (recap) { const x = link('▶ Recap', recap); x.className = 'btn btn-primary'; x.title = 'About 5 minutes, opens the NHL video player'; acts.appendChild(x); }
+      if (cond) { const x = link('Condensed', cond); x.className = 'btn'; x.title = 'About 10 minutes, opens the NHL video player'; acts.appendChild(x); }
+      if (!recap && !cond) { const n = document.createElement('span'); n.className = 'game-novid'; n.textContent = 'Video not posted yet'; acts.appendChild(n); }
+      const rv = document.createElement('button'); rv.type = 'button'; rv.className = 'btn btn-ghost';
+      rv.textContent = shown ? 'Hide score' : 'Reveal score';
+      rv.setAttribute('aria-label', (shown ? 'Hide' : 'Reveal') + ' the score of ' + awayName + ' at ' + homeName);
+      rv.addEventListener('click', () => {
+        if (shown) { reveal.ids.delete(r.game_id); if (reveal.all) { reveal.all = false; day[1].forEach((x) => { if (x.game_id !== r.game_id) reveal.ids.add(x.game_id); }); setRevealButtons(); } }
+        else reveal.ids.add(r.game_id);
+        dash.draw('latestGames');
+      });
+      acts.appendChild(rv);
       card.appendChild(acts);
       el.appendChild(card);
+    }
+  });
+
+  // ---------------------------------------------------------------- team bar + overview
+  dash.draw('teamBar', (el) => {
+    const rows = standings();
+    el.replaceChildren();
+    const t = rows && rows.find((r) => r.team === team());
+    const who = document.createElement('div'); who.className = 'tb-who';
+    if (t) {
+      who.append(logo(t.team, darkTheme(el)));
+      const n = document.createElement('div');
+      const nm = document.createElement('strong'); nm.textContent = t.name;
+      const sub = document.createElement('span'); sub.textContent = t.w + '-' + t.l + '-' + t.otl + ' · ' + t.pts + ' pts';
+      n.append(nm, sub); who.appendChild(n);
+    } else {
+      const n = document.createElement('div');
+      const nm = document.createElement('strong'); nm.textContent = 'Whole league';
+      const sub = document.createElement('span'); sub.textContent = 'All 32 teams this season';
+      n.append(nm, sub); who.appendChild(n);
+    }
+    const acts = document.createElement('div'); acts.className = 'tb-acts';
+    if (team()) {
+      const change = document.createElement('button'); change.type = 'button'; change.className = 'btn';
+      change.textContent = pickerOpen ? 'Close team list' : 'Change team';
+      change.setAttribute('aria-expanded', String(pickerOpen)); change.setAttribute('aria-controls', 'teams');
+      change.addEventListener('click', () => togglePicker(!pickerOpen));
+      const league = document.createElement('button'); league.type = 'button'; league.className = 'btn btn-ghost';
+      league.textContent = 'Whole league';
+      league.addEventListener('click', () => pickTeam(team()));
+      acts.append(change, league);
+    }
+    if (team()) {                                  // the overview card below names the team; keep this bar to its actions
+      const lab = document.createElement('span'); lab.className = 'tb-label'; lab.textContent = 'Team';
+      el.append(lab, acts);
+    } else el.append(who, acts);
+  });
+
+  const ordinalOf = (n) => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] || 'th');
+  dash.draw('teamHero', (el) => {
+    const rows = standings();
+    const t = rows && rows.find((r) => r.team === team());
+    const s = summary();
+    const f = dash.data('teamForm');
+    const form = f.status === 'ok' && f.data ? f.data.find((r) => r.team === team()) : null;
+    el.replaceChildren();
+    if (!t) { el.textContent = '—'; return; }
+    const W = 'team=' + encodeURIComponent(t.team);
+    const head = document.createElement('div'); head.className = 'th-head';
+    const big = logo(t.team, darkTheme(el)); big.className = 'th-logo';
+    const titles = document.createElement('div');
+    const h = document.createElement('h2'); h.textContent = t.name;
+    const sub = document.createElement('p'); sub.className = 'hr-sub';
+    sub.textContent = t.division + ' Division · ' + t.conference + ' Conference';
+    titles.append(h, sub); head.append(big, titles);
+
+    const tiles = document.createElement('div'); tiles.className = 'th-tiles';
+    const tile = (label, value, note, cls) => {
+      const d = document.createElement('div'); d.className = 'th-tile' + (cls ? ' ' + cls : '');
+      const l = document.createElement('span'); l.className = 'th-label'; l.textContent = label;
+      const v = document.createElement('span'); v.className = 'th-value'; v.append(...[].concat(value));
+      d.append(l, v);
+      if (note) { const n = document.createElement('span'); n.className = 'th-note'; n.append(...[].concat(note)); d.appendChild(n); }
+      tiles.appendChild(d);
+    };
+    tile('Record', [mark('span', 'standings', 'w', W, t.w), '-', mark('span', 'standings', 'l', W, t.l), '-', mark('span', 'standings', 'otl', W, t.otl)],
+      [mark('span', 'standings', 'pts', W, t.pts), ' points · ' + t.streak + ' streak']);
+    tile('Standing', ordinalOf(+t.division_rank) + ' ' + t.division, ordinalOf(+t.conference_rank) + ' in the ' + t.conference + ' · ' + ordinalOf(+t.league_rank) + ' overall');
+    if (form) {
+      const d = form.last5 - form.first5;
+      tile('Team form', [mark('span', 'teamForm', 'last5', W, fmt2(form.last5))],
+        ['last 5 games · ', (Math.abs(d) < 0.15 ? 'steady' : (d > 0 ? '▲ ' : '▼ ') + fmt2(Math.abs(d))) + ' vs first 5'],
+        Math.abs(d) < 0.15 ? '' : (d > 0 ? 'is-up' : 'is-down'));
+    }
+    if (s) tile('Top player', s.leader, ['averaging ', mark('b', 'summary', 'leader_avg', W, fmt2(s.leader_avg)), ' over ' + s.games + ' games']);
+    el.append(head, tiles);
+    if (s) {
+      const last = document.createElement('p'); last.className = 'th-last';
+      last.append('Latest game: ' + gameLabel(s) + ' · best was ' + s.last_best + ' ', chip(s.last_best_rating));
+      el.appendChild(last);
     }
   });
 
@@ -838,6 +942,13 @@
     dash.setLink(name);
   }
   document.querySelectorAll('.hr-tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
+  window.addEventListener('hashchange', () => { if (location.hash === '#stats' || location.hash === '#latest') showTab(location.hash.slice(1)); });
+  document.querySelectorAll('.sec-nav a').forEach((a) => a.addEventListener('click', (e) => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+  }));
   syncTeamSections();
   if (location.hash === '#stats') showTab('stats');
 
@@ -943,16 +1054,15 @@
   }));
   document.querySelectorAll('#hr-hide-stand').forEach((b) => b.addEventListener('click', () => showStandings(false)));
   function pickTeam(code) {
+    pickerOpen = false;
     if (code === team()) {                       // clicking the selected team again clears it
       dash.setParams({ team: '' });
       syncTeamSections();
-      showStandings(true);
       return;
     }
     dash.setParams({ team: code });
     syncTeamSections();
-    showStandings(false);
-    const s = document.getElementById('team');
+    const s = document.getElementById('stats');
     if (s) s.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
 
