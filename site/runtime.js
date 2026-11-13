@@ -18,11 +18,14 @@
   const calcs = {};
   const draws = {};
   const dataListeners = [];
-  const defaults = { team: '' };   // no team picked until the reader picks one
+  const defaults = { team: '', group: '' };   // no team (or conference/division) picked until the reader picks one
   let params = { ...defaults };
 
-  const fromUrl = new URLSearchParams(location.search).get('team');
+  const query = new URLSearchParams(location.search);
+  const fromUrl = query.get('team');
   if (fromUrl && /^[A-Z]{3}$/.test(fromUrl)) params.team = fromUrl;
+  const groupUrl = query.get('group');
+  if (groupUrl && /^[A-Za-z]{4,20}$/.test(groupUrl)) params.group = groupUrl;
 
   // The data files keep their names between updates. nhl_meta.json is always fetched fresh, and its update time
   // tags every other file's URL, so a browser never reuses data from before the latest update.
@@ -102,6 +105,7 @@
       params = { ...params, ...next };
       const q = new URLSearchParams(location.search);
       if (params.team && params.team !== defaults.team) q.set('team', params.team); else q.delete('team');
+      if (params.group) q.set('group', params.group); else q.delete('group');
       history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
       schedule();
     },

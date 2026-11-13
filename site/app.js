@@ -15,23 +15,59 @@
     return 'color-mix(in oklab, var(' + (v >= 50 ? '--color-ok' : '--color-bad') + ') ' + pct + '%, var(--color-panel))';
   };
   const team = () => dash.params().team || '';
+  const group = () => dash.params().group || '';          // a conference or division name, when no single team is picked
+  // Is this team in what the reader picked: the team itself, its conference or division, or (nothing picked) the league?
+  let scopeIndex = null;
+  function inScope(code) {
+    if (team()) return code === team();
+    const g = group();
+    if (!g) return true;
+    const st = dash.data('standings');
+    if (st.status !== 'ok' || !st.data) return true;
+    if (!scopeIndex || scopeIndex.data !== st.data) scopeIndex = { data: st.data, map: new Map(st.data.map((r) => [r.team, r])) };
+    const r = scopeIndex.map.get(code);
+    return !!r && (r.division === g || r.conference === g);
+  }
+  function scopeName() {
+    const g = group();
+    if (!g) return 'the whole league';
+    return g + (g === 'Eastern' || g === 'Western' ? ' Conference' : ' Division');
+  }
   // Sections that need a team: hidden until one is picked, with a hint in their place.
   const TEAM_SECTIONS = ['team', 'team-trend', 'grid', 'game'];   // the rest switch to league-wide views
-  let pickerOpen = false;
   function syncTeamSections() {
     const has = !!team();
     const setHidden = (el, want) => { if (el && el.hidden !== want) el.hidden = want; };   // only touch it when it changes
     TEAM_SECTIONS.forEach((id) => setHidden(document.getElementById(id), !has));
     setHidden(document.getElementById('hr-no-team'), has);
-    document.querySelectorAll('.sec-nav [data-needs-team]').forEach((a) => setHidden(a, !has));
-    setHidden(document.getElementById('teams'), has && !pickerOpen);
+    document.querySelectorAll('.view-tabs [data-needs-team]').forEach((a) => setHidden(a, !has));
+    setHidden(document.getElementById('groups'), has);
+    if (!has && curView === 'team') showView('players');
     document.querySelectorAll('.hr-season').forEach((t) => t.classList.toggle('one-team', has));   // team column only in the league view
   }
-  function togglePicker(open) {
-    pickerOpen = open;
-    syncTeamSections();
-    dash.draw('teamBar');
+  // The stats page shows one view at a time: Players, Team (once a team is picked), Lines, Divisions & standings.
+  let curView = 'players';
+  function showView(v) {
+    if (v === 'team' && !team()) v = 'players';
+    curView = v;
+    document.querySelectorAll('#stats .view').forEach((d) => { const want = d.dataset.view !== v; if (d.hidden !== want) d.hidden = want; });
+    document.querySelectorAll('.view-tabs [data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === v)));
   }
+  document.querySelectorAll('.view-tabs [data-view]').forEach((b) => b.addEventListener('click', () => {
+    showView(b.dataset.view);
+    const tabs = document.querySelector('.view-tabs');
+    if (tabs && tabs.getBoundingClientRect().top < 0) tabs.scrollIntoView({ block: 'start' });
+  }));
+  // Keep the sticky section links just below the sticky team strip, whatever height it wraps to.
+  try {
+    const head = document.querySelector('.app-head'), strip = document.getElementById('teams');
+    const setVars = () => {
+      document.documentElement.style.setProperty('--head-h', (head ? head.offsetHeight : 58) + 'px');
+      document.documentElement.style.setProperty('--scope-h', (strip ? strip.offsetHeight : 0) + 'px');
+    };
+    new ResizeObserver(setVars).observe(document.body);
+    if (strip) new ResizeObserver(setVars).observe(strip);
+  } catch (e) { /* older browsers: the links just sit a little lower */ }
   // One shared tooltip on top of the page. Fixed to the window so scrolling tables and chart edges can't cut it off;
   // it opens below the point, or above it when there isn't room below.
   let floatTip = null;
@@ -126,6 +162,61 @@
     },
   });
 
+  dash.calc('groupAvg', {
+    title: 'Averages by division and conference',
+    description: 'For each conference and division: teams, points percentage, average team game score (skater scores weighted by ice time, averaged over every game), average skater rating (5+ games), the team with the best average game score and the top-rated player.',
+    inputs: ['teamGames', 'season', 'standings'],
+    fn: (teamGames, season, standingsRows) => {
+      const info = new Map(standingsRows.map((r) => [r.team, r]));
+      const gameAvg = d3.rollup(teamGames, (v) => d3.mean(v, (g) => g.team_rating), (g) => g.team);
+      const confs = d3.sort(d3.groups(standingsRows, (r) => r.conference), (g) => g[0]);
+      const order = ['Atlantic', 'Metropolitan', 'Central', 'Pacific'];
+      const out = [];
+      const row = (name, kind, teams) => {
+        const codes = new Set(teams.map((t) => t.team));
+        const sk = season.filter((p) => codes.has(p.team) && p.group !== 'G' && p.gp >= 5 && p.rating != null);
+        const top = d3.greatest(season.filter((p) => codes.has(p.team) && p.gp >= 5 && p.rating != null), (p) => p.rating);
+        const best = d3.greatest(teams, (t) => gameAvg.get(t.team) ?? -1);
+        const gp = d3.sum(teams, (t) => +t.gp);
+        out.push({
+          name, kind, teams: teams.length,
+          pts_pct: gp ? Math.round(d3.sum(teams, (t) => +t.pts) / (2 * gp) * 1000) / 10 : null,
+          avg_game: Math.round(d3.mean(teams, (t) => gameAvg.get(t.team)) * 10) / 10,
+          avg_rating: sk.length ? Math.round(d3.mean(sk, (p) => p.rating) * 10) / 10 : null,
+          best_team: best ? best.team : '', best_team_game: best ? Math.round(gameAvg.get(best.team) * 10) / 10 : null,
+          top_player: top ? top.name + ' (' + top.team + ')' : '', top_rating: top ? top.rating : null,
+        });
+      };
+      for (const [conf, rs] of confs) {
+        row(conf, 'conference', rs);
+        for (const [div, drs] of d3.sort(d3.groups(rs, (r) => r.division), (g) => order.indexOf(g[0]))) row(div, 'division', drs);
+      }
+      return out;
+    },
+  });
+
+  dash.draw('groupRows', (tb) => {
+    const d = dash.data('groupAvg');
+    tb.replaceChildren();
+    if (d.status !== 'ok' || !d.data) return;
+    for (const r of d.data) {
+      const tr = document.createElement('tr');
+      tr.className = 'pick' + (r.kind === 'conference' ? ' conf' : '') + (!team() && group() === r.name ? ' on' : '');
+      tr.tabIndex = 0;
+      const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
+      td(r.kind === 'conference' ? r.name + ' Conference' : r.name, 'l' + (r.kind === 'division' ? ' ind' : ''));
+      td(String(r.teams)); td(r.pts_pct == null ? '—' : fmt1(r.pts_pct));
+      const g = document.createElement('td'); g.appendChild(chip(r.avg_game, fmt1(r.avg_game))); tr.appendChild(g);
+      const a = document.createElement('td'); a.appendChild(r.avg_rating == null ? document.createTextNode('—') : chip(r.avg_rating, fmt1(r.avg_rating))); tr.appendChild(a);
+      td(r.best_team ? r.best_team + ' · ' + fmt1(r.best_team_game) : '—', 'l');
+      td(r.top_player ? r.top_player + ' · ' + fmt0(r.top_rating) : '—', 'l');
+      const go = () => pickGroup(r.name);
+      tr.addEventListener('click', go);
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      tb.appendChild(tr);
+    }
+  });
+
   dash.calc('summary', {
     title: 'Headline numbers per team',
     description: 'For each team: games rated, the leading regular (played at least half the games) and the top-rated player in its latest game.',
@@ -192,7 +283,7 @@
 
   dash.draw('seasonRows', (tb) => {
     const s = dash.data('season');
-    if (s.status === 'ok' && s.data && unchanged(tb, [s.data, team(), dash.data('summary').data])) return;
+    if (s.status === 'ok' && s.data && unchanged(tb, [s.data, team(), group(), dash.data('summary').data])) return;
     tb.replaceChildren();
     if (s.status !== 'ok' || !s.data) return;
     const list = team() ? teamPlayers() : teamPlayers().filter((p) => p.gp >= leagueMinGames()).slice(0, 50);
@@ -213,7 +304,7 @@
       const avg = document.createElement('td'); avg.appendChild(chip(p.avg, fmt0(p.avg))); tr.appendChild(avg);
       const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt0(p.last5))); tr.appendChild(l5);
       if (p.drive == null) td('—'); else { const d = document.createElement('td'); d.appendChild(rchip(p.drive)); tr.appendChild(d); }
-      tr.className = 'pick'; tr.tabIndex = 0;
+      tr.className = 'pick' + (state.player === p.player_id ? ' on' : ''); tr.tabIndex = 0;
       tr.addEventListener('click', () => openPlayer(p.player_id));
       tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id); } });
       tb.appendChild(tr);
@@ -420,10 +511,16 @@
 
   const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   function openPlayer(id) {
-    state.player = id;
+    state.player = state.player === id ? null : id;      // click the same player again to clear
+    markPlayerRows();
     ['playerGrid', 'playerText', 'playerChart', 'hotRows'].forEach((n) => dash.draw(n));
     const s = document.getElementById('player-trend');
-    if (s) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+    if (!state.player || !s) return;
+    const r = s.getBoundingClientRect();
+    if (r.top > innerHeight - 120 || r.bottom < 160) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+  }
+  function markPlayerRows() {
+    document.querySelectorAll('#season tbody tr').forEach((tr) => tr.classList.toggle('on', !!state.player && tr.dataset.key.split(',')[1] === String(state.player)));
   }
   document.querySelectorAll('.hr-sw-roll').forEach((el) => { el.style.background = dash.colors[0]; });
 
@@ -431,7 +528,8 @@
   function teamPlayers() {
     const s = dash.data('season');
     if (s.status !== 'ok' || !s.data) return [];
-    return team() ? groupOf(s.data, 'team', (p) => p.team).get(team()) || [] : s.data;
+    if (team()) return groupOf(s.data, 'team', (p) => p.team).get(team()) || [];
+    return group() ? s.data.filter((p) => inScope(p.team)) : s.data;
   }
   // League view: the season's leaders, players with at least half of a team's games so far.
   function leagueMinGames() {
@@ -577,7 +675,7 @@
 
   dash.draw('playerText', (el) => {
     const p = currentPlayer();
-    if (!p) { el.textContent = team() ? 'Pick a player above to chart their season game by game. Click them again to clear.' : ''; return; }
+    if (!p) { el.textContent = 'Click a player in the table to chart their season game by game. Click again to clear.'; return; }
     const W = 'team=' + encodeURIComponent(p.team) + '&player_id=' + encodeURIComponent(p.player_id);
     const players = teamPlayers().filter((q) => q.gp >= 6);
     const medianSpread = d3.median(players, (q) => q.spread);
@@ -744,7 +842,7 @@
     tb.replaceChildren();
     if (s.status !== 'ok' || !s.data) return;
     const league = !team();
-    const mine = league ? s.data.filter((r) => r.games >= 4 && r.avg_rating != null) : groupOf(s.data, 'team', (r) => r.team).get(team()) || [];
+    const mine = league ? s.data.filter((r) => r.games >= 4 && r.avg_rating != null && inScope(r.team)) : groupOf(s.data, 'team', (r) => r.team).get(team()) || [];
     for (const [kind, label, n] of [['F', 'Forward lines', league ? 10 : 8], ['D', 'Defense pairs', league ? 6 : 5]]) {
       const list = d3.sort(mine.filter((r) => r.kind === kind), (r) => (league ? -r.avg_rating : -r.toi_min)).slice(0, n);
       if (!list.length) continue;
@@ -829,10 +927,10 @@
   });
 
   function openTeamStats(code) {
-    pickerOpen = false;
-    dash.setParams({ team: code });
+    dash.setParams({ team: code, group: '' });
     syncTeamSections();
     showTab('stats');
+    showView('team');
     const s = document.getElementById('stats');
     if (s) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
   }
@@ -997,38 +1095,25 @@
   });
 
   // ---------------------------------------------------------------- team bar + overview
+  // The scope bar: whole league, a conference, or (below) a division or a team. Click the picked one again to clear it.
   dash.draw('teamBar', (el) => {
     const rows = standings();
     el.replaceChildren();
+    const chips = document.createElement('div'); chips.className = 'scope-chips';
+    const chip_ = (label, on, onClick, title) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'scope-chip'; b.textContent = label;
+      b.setAttribute('aria-pressed', String(on)); if (title) b.title = title;
+      b.addEventListener('click', onClick); chips.appendChild(b); return b;
+    };
+    chip_('All teams', !team() && !group(), () => pickGroup(''));
+    for (const c of ['Eastern', 'Western']) chip_(c, !team() && group() === c, () => pickGroup(c), c + ' Conference');
+    const now = document.createElement('p'); now.className = 'scope-now';
+    const b_ = (txt) => { const x = document.createElement('b'); x.textContent = txt; return x; };
     const t = rows && rows.find((r) => r.team === team());
-    const who = document.createElement('div'); who.className = 'tb-who';
-    if (t) {
-      who.append(logo(t.team, darkTheme(el)));
-      const n = document.createElement('div');
-      const nm = document.createElement('strong'); nm.textContent = t.name;
-      const sub = document.createElement('span'); sub.textContent = t.w + '-' + t.l + '-' + t.otl + ' · ' + t.pts + ' pts';
-      n.append(nm, sub); who.appendChild(n);
-    } else {
-      const n = document.createElement('div');
-      const nm = document.createElement('strong'); nm.textContent = 'Whole league';
-      const sub = document.createElement('span'); sub.textContent = 'All 32 teams this season';
-      n.append(nm, sub); who.appendChild(n);
-    }
-    const acts = document.createElement('div'); acts.className = 'tb-acts';
-    if (team()) {
-      const change = document.createElement('button'); change.type = 'button'; change.className = 'btn';
-      change.textContent = pickerOpen ? 'Close team list' : 'Change team';
-      change.setAttribute('aria-expanded', String(pickerOpen)); change.setAttribute('aria-controls', 'teams');
-      change.addEventListener('click', () => togglePicker(!pickerOpen));
-      const league = document.createElement('button'); league.type = 'button'; league.className = 'btn btn-ghost';
-      league.textContent = 'Whole league';
-      league.addEventListener('click', () => pickTeam(team()));
-      acts.append(change, league);
-    }
-    if (team()) {                                  // the overview card below names the team; keep this bar to its actions
-      const lab = document.createElement('span'); lab.className = 'tb-label'; lab.textContent = 'Team';
-      el.append(lab, acts);
-    } else el.append(who, acts);
+    if (t) now.append('Showing ', b_(t.name), ' · click the logo again for all teams');
+    else if (group()) now.append('Showing ', b_(scopeName()), ' · click it again for all teams');
+    else now.append('Showing ', b_('all 32 teams'), ' · pick a team, conference or division');
+    el.append(chips, now);
   });
 
   const ordinalOf = (n) => n + (['th', 'st', 'nd', 'rd'][(n % 100 > 10 && n % 100 < 14) ? 0 : (n % 10 < 4 ? n % 10 : 0)] || 'th');
@@ -1087,12 +1172,6 @@
   }
   document.querySelectorAll('.hr-tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
   window.addEventListener('hashchange', () => { if (location.hash === '#stats' || location.hash === '#latest') showTab(location.hash.slice(1)); });
-  document.querySelectorAll('.sec-nav a').forEach((a) => a.addEventListener('click', (e) => {
-    const target = document.querySelector(a.getAttribute('href'));
-    if (!target) return;
-    e.preventDefault();
-    target.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
-  }));
   syncTeamSections();
   if (location.hash === '#stats') showTab('stats');
 
@@ -1130,38 +1209,40 @@
   const redrawTeam = () => { themeCache = null; ['teamGrid', 'standingsRows', 'teamTitle', 'latestGames'].forEach((n) => dash.draw(n)); };
   try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawTeam); } catch (e) { /* older browsers */ }
 
+  const DIV_ORDER = ['Atlantic', 'Metropolitan', 'Central', 'Pacific'];
+  function markScope(el) {
+    el.querySelectorAll('.hr-logo').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.team === team()));
+      b.classList.toggle('out', !inScope(b.dataset.team));
+    });
+    el.querySelectorAll('.scope-div').forEach((b) => b.setAttribute('aria-pressed', String(!team() && group() === b.dataset.group)));
+  }
   dash.draw('teamGrid', (el) => {
     const s = dash.data('standings');
     const rows = standings();
     const dark = darkTheme(el);
-    if (rows && unchanged(el, [rows, logoSet(dark), dark])) {
-      el.querySelectorAll('.hr-logo').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.team === team())));
-      return;
-    }
+    if (rows && unchanged(el, [rows, logoSet(dark), dark])) { markScope(el); return; }
     el.replaceChildren();
     if (s.status === 'error') { el.textContent = 'Failed to load'; return; }
     if (!rows) { el.textContent = '—'; return; }
-    for (const [conf, confRows] of d3.sort(d3.groups(rows, (r) => r.conference), (g) => g[0])) {
-      const c = document.createElement('div'); c.className = 'hr-conf';
-      const h3 = document.createElement('h3'); h3.textContent = conf + ' Conference'; c.appendChild(h3);
-      for (const [div, divRows] of d3.sort(d3.groups(confRows, (r) => r.division), (g) => g[0])) {
-        const d = document.createElement('div'); d.className = 'hr-div';
-        const h4 = document.createElement('h4'); h4.textContent = div; d.appendChild(h4);
-        const grid = document.createElement('div'); grid.className = 'hr-logos';
-        for (const t of d3.sort(divRows, (r) => r.team)) {
-          const b = document.createElement('button');
-          b.type = 'button'; b.className = 'hr-logo'; b.title = t.name; b.dataset.team = t.team;
-          b.setAttribute('aria-label', t.name);
-          b.setAttribute('aria-pressed', String(t.team === team()));
-          const lab = document.createElement('span'); lab.textContent = t.team;
-          b.append(logo(t.team, dark), lab);
-          b.addEventListener('click', () => pickTeam(t.team));
-          grid.appendChild(b);
-        }
-        d.appendChild(grid); c.appendChild(d);
+    const order = (d) => { const i = DIV_ORDER.indexOf(d); return i < 0 ? 99 : i; };
+    for (const [div, divRows] of d3.sort(d3.groups(rows, (r) => r.division), (g) => order(g[0]))) {
+      const box = document.createElement('div'); box.className = 'scope-group';
+      const lab = document.createElement('button'); lab.type = 'button'; lab.className = 'scope-chip scope-div'; lab.dataset.group = div;
+      lab.textContent = div; lab.title = div + ' Division';
+      lab.addEventListener('click', () => pickGroup(div));
+      box.appendChild(lab);
+      for (const t of d3.sort(divRows, (r) => r.name)) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'hr-logo'; b.title = t.name; b.dataset.team = t.team;
+        b.setAttribute('aria-label', t.name);
+        b.append(logo(t.team, dark));
+        b.addEventListener('click', () => pickTeam(t.team, 'strip'));
+        box.appendChild(b);
       }
-      el.appendChild(c);
+      el.appendChild(box);
     }
+    markScope(el);
   });
 
   dash.draw('teamTitle', (el) => {
@@ -1197,15 +1278,21 @@
     if (sec) sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }));
   document.querySelectorAll('#hr-hide-stand').forEach((b) => b.addEventListener('click', () => showStandings(false)));
-  function pickTeam(code) {
-    pickerOpen = false;
-    if (code === team()) {                       // clicking the selected team again clears it
-      dash.setParams({ team: '' });
+  function pickGroup(g) {
+    const clear = !g || (!team() && group() === g);      // clicking the picked conference/division again clears it
+    dash.setParams({ team: '', group: clear ? '' : g });
+    syncTeamSections();
+  }
+  function pickTeam(code, from) {
+    if (code === team()) {                       // clicking the selected team again goes back to all teams
+      dash.setParams({ team: '', group: '' });
       syncTeamSections();
       return;
     }
-    dash.setParams({ team: code });
+    dash.setParams({ team: code, group: '' });
     syncTeamSections();
+    if (from === 'strip') return;                // the strip stays on screen: keep the reader where they are
+    showView('team');
     const s = document.getElementById('stats');
     if (s) s.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   }
@@ -1244,7 +1331,7 @@
   dash.draw('standingsRows', (tb) => {
     const rows = standings();
     const dark = darkTheme(tb);
-    if (rows && unchanged(tb, [rows, logoSet(dark), dark, view.by])) {
+    if (rows && unchanged(tb, [rows, logoSet(dark), dark, view.by, group()])) {
       tb.querySelectorAll('tr[data-key]').forEach((tr) => tr.classList.toggle('on', tr.dataset.key === team()));
       return;
     }
@@ -1256,7 +1343,8 @@
       const td = document.createElement('td'); td.colSpan = ncol; td.textContent = text; gr.appendChild(td);
       tb.appendChild(gr);
     };
-    for (const block of standingsBlocks(rows)) {
+    const g = group();
+    for (const block of standingsBlocks(g ? rows.filter((r) => r.division === g || r.conference === g) : rows)) {
       if (block.label) header('grp', block.label);
       if (block.sub) header('sub', block.sub);
       block.rows.forEach((t, i) => {
@@ -1292,7 +1380,7 @@
   // ---------------------------------------------------------------- upsets
   function upsetGames() {
     const g = dash.data('games');
-    return g.status === 'ok' ? g.data.filter((r) => r.upset === 'True').sort((a, b) => +a.winner_pregame_prob - +b.winner_pregame_prob) : [];
+    return g.status === 'ok' ? g.data.filter((r) => r.upset === 'True' && (team() || !group() || inScope(r.winner) || inScope(r.loser))).sort((a, b) => +a.winner_pregame_prob - +b.winner_pregame_prob) : [];
   }
   function storyGame() {
     syncTeam();

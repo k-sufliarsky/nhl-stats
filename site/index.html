@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="theme.css?v=20261113c">
-<link rel="stylesheet" href="app.css?v=20261113c">
+<link rel="stylesheet" href="theme.css?v=20261113e">
+<link rel="stylesheet" href="app.css?v=20261113e">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js?v=20261113c"></script>
+<script src="runtime.js?v=20261113e"></script>
 </head>
 <body>
 <header class="app-head" id="top">
@@ -62,32 +62,36 @@
   </section>
 
   <div class="hr-panel" id="stats" role="tabpanel" aria-labelledby="tab-stats" hidden>
-  <div class="team-bar" data-source="standings logosLight logosDark" data-draw="teamBar"></div>
+  <div class="scope" id="teams" role="group" aria-label="Pick a team, conference or division">
+    <div class="scope-top" data-source="standings" data-draw="teamBar"></div>
+    <div class="scope-logos" data-source="standings logosLight logosDark" data-draw="teamGrid"></div>
+  </div>
 
-  <section class="hr-sec team-picker" id="teams" aria-label="Pick a team">
-    <div class="hr-confs" data-source="standings logosLight logosDark" data-draw="teamGrid"></div>
-  </section>
 
-  <nav class="sec-nav" aria-label="Sections">
-    <a href="#team" data-needs-team>Overview</a>
-    <a href="#season">Players</a>
-    <a href="#trends">Trends</a>
-    <a href="#lines">Lines</a>
-    <a href="#grid" data-needs-team>Game log</a>
-    <a href="#game" data-needs-team>Game detail</a>
-    <a href="#upsets">Upsets</a>
-    <a href="#standings">Standings</a>
+
+
+
+
+
+
+
+
+
+
+
+  <nav class="sec-nav view-tabs" role="tablist" aria-label="Views of the stats">
+    <button type="button" role="tab" data-view="players" aria-selected="true">Players</button>
+    <button type="button" role="tab" data-view="team" data-needs-team aria-selected="false">Team</button>
+    <button type="button" role="tab" data-view="lines" aria-selected="false">Lines</button>
+    <button type="button" role="tab" data-view="league" aria-selected="false">Divisions &amp; standings</button>
   </nav>
 
-
-  <section class="hr-sec" id="team">
-    <div class="team-hero" data-source="standings summary teamForm logosLight logosDark" data-draw="teamHero"></div>
-  </section>
-
+  <div class="view" data-view="players">
+    <div class="players-split">
   <section class="hr-sec" id="season">
     <div>
       <h2>Players</h2>
-      <p class="hr-sub">Everything here is on a 0–100 scale where 50 is average. Rating is a running estimate of how good each player is, started from last season; game scores rate single games. Click a player for their trend.</p>
+      <p class="hr-sub">Everything here is on a 0–100 scale where 50 is average. Rating is a running estimate of how good each player is, started from last season; game scores rate single games. Click a player to chart their season.</p>
       <details class="how">
         <summary>How it's scored</summary>
         <ul>
@@ -116,29 +120,9 @@
       </table>
     </div>
   </section>
-
   <section class="hr-sec" id="trends">
-    <div>
-      <h2>Trends</h2>
-      <p class="hr-sub">Dots are single games. The team line is the five-game average; the player line is the player's rating after each game.</p>
-    </div>
-
-    <div class="hr-trend-grid" id="team-trend">
-      <h3>Team</h3>
-      <p class="hr-lede" data-draw="teamTrendText">—</p>
-      <div class="hr-key" aria-hidden="true">
-        <span><i class="hr-sw hr-sw-win"></i>Win</span>
-        <span><i class="hr-sw hr-sw-loss"></i>Loss</span>
-        <span><i class="hr-sw hr-sw-roll"></i>5-game average</span>
-        <span><i class="hr-sw hr-sw-ref"></i>League average</span>
-      </div>
-      <div class="hr-chart" data-source="teamGames" data-draw="teamChart"></div>
-      <p class="hr-sub">Team rating: skaters' ratings averaged by ice time.</p>
-    </div>
-
     <div class="hr-trend-grid" id="player-trend">
-      <h3>Player</h3>
-      <div class="hr-players" data-source="season" data-draw="playerGrid"></div>
+      <h3>Player trend</h3>
       <p class="hr-lede" data-draw="playerText">—</p>
       <div class="hr-key" aria-hidden="true">
         <span><i class="hr-sw hr-sw-dot"></i>Game score</span>
@@ -168,30 +152,25 @@
       </div>
     </div>
   </section>
+    </div>
+  </div>
 
-  <section class="hr-sec" id="lines">
-    <div>
-      <h2>Lines</h2>
-      <p class="hr-sub">Units with the most 5-on-5 time together, from shift charts. CF% is their share of shot attempts while together.</p>
-    </div>
-    <div class="hr-scroll">
-      <table class="hr-full hr-hot" data-source="lineSeason" data-row-key="team,player_ids" aria-label="Most-used line combinations this season">
-        <thead><tr>
-          <th class="l" data-field="names">Unit</th>
-          <th data-field="games">GP</th>
-          <th data-field="toi_min">5v5 min</th>
-          <th data-field="CF">CF</th>
-          <th data-field="CA">CA</th>
-          <th data-field="cf_pct">CF%</th>
-          <th data-field="GF">GF</th>
-          <th data-field="GA">GA</th>
-          <th data-field="avg_rating">Line rating</th>
-        </tr></thead>
-        <tbody data-draw="lineRows"></tbody>
-      </table>
-    </div>
+  <div class="view" data-view="team" hidden>
+  <section class="hr-sec" id="team">
+    <div class="team-hero" data-source="standings summary teamForm logosLight logosDark" data-draw="teamHero"></div>
   </section>
-
+    <section class="hr-sec hr-trend-grid" id="team-trend">
+      <h2>Team trend</h2>
+      <p class="hr-lede" data-draw="teamTrendText">—</p>
+      <div class="hr-key" aria-hidden="true">
+        <span><i class="hr-sw hr-sw-win"></i>Win</span>
+        <span><i class="hr-sw hr-sw-loss"></i>Loss</span>
+        <span><i class="hr-sw hr-sw-roll"></i>5-game average</span>
+        <span><i class="hr-sw hr-sw-ref"></i>League average</span>
+      </div>
+      <div class="hr-chart" data-source="teamGames" data-draw="teamChart"></div>
+      <p class="hr-sub">Team rating: skaters' ratings averaged by ice time.</p>
+    </section>
   <section class="hr-sec" id="grid">
     <div>
       <h2>Game log</h2>
@@ -200,7 +179,6 @@
     <div class="hr-legend" aria-hidden="true" data-draw="legend"></div>
     <div class="hr-scroll hr-heat" data-source="ratings" data-draw="heat"></div>
   </section>
-
   <section class="hr-sec" id="game">
     <div>
       <h2>Game detail</h2>
@@ -254,32 +232,54 @@
     <h3>Lines in this game</h3>
     <div class="hr-lines" data-source="lines ratings" data-draw="gameLines"></div>
   </section>
+  </div>
 
-  <section class="hr-sec" id="upsets">
+  <div class="view" data-view="lines" hidden>
+  <section class="hr-sec" id="lines">
     <div>
-      <h2>Upsets</h2>
-      <p class="hr-sub">Wins by a team with under a 40% pre-game chance (from points percentage and home ice).</p>
-    </div>
-    <article class="hr-story" id="upset-story" data-source="games ratings goals" data-draw="upsetStory"></article>
-    <div>
-      <h3>Biggest upsets this season</h3>
+      <h2>Lines</h2>
+      <p class="hr-sub">Units with the most 5-on-5 time together, from shift charts. CF% is their share of shot attempts while together.</p>
     </div>
     <div class="hr-scroll">
-      <table class="hr-full" data-source="games" data-row-key="game_id" aria-label="Biggest upsets of the season">
+      <table class="hr-full hr-hot" data-source="lineSeason" data-row-key="team,player_ids" aria-label="Most-used line combinations this season">
         <thead><tr>
-          <th class="l" data-field="date">Date</th>
-          <th class="l" data-field="winner">Winner</th>
-          <th class="l" data-field="final">Score</th>
-          <th class="l" data-field="loser">Beat</th>
-          <th data-field="winner_pregame_pct">Win chance %</th>
-          <th class="l" data-field="winner_star">Winner's best</th>
-          <th class="l">Story</th>
+          <th class="l" data-field="names">Unit</th>
+          <th data-field="games">GP</th>
+          <th data-field="toi_min">5v5 min</th>
+          <th data-field="CF">CF</th>
+          <th data-field="CA">CA</th>
+          <th data-field="cf_pct">CF%</th>
+          <th data-field="GF">GF</th>
+          <th data-field="GA">GA</th>
+          <th data-field="avg_rating">Line rating</th>
         </tr></thead>
-        <tbody data-draw="upsetRows"></tbody>
+        <tbody data-draw="lineRows"></tbody>
       </table>
     </div>
   </section>
+  </div>
 
+  <div class="view" data-view="league" hidden>
+  <section class="hr-sec" id="groups">
+    <div>
+      <h2>Divisions &amp; conferences</h2>
+      <p class="hr-sub">Average game score is each team's skater scores in a game, weighted by ice time, averaged over all its games. Average rating is the mean rating of skaters with 5+ games. Click a row to show only that group.</p>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full hr-groups" data-source="groupAvg" aria-label="Average scores by division and conference">
+        <thead><tr>
+          <th class="l" data-field="name">Group</th>
+          <th data-field="teams">Teams</th>
+          <th data-field="pts_pct" title="Points percentage, from the standings">Pts %</th>
+          <th data-field="avg_game" title="Average team game score">Avg game score</th>
+          <th data-field="avg_rating" title="Average skater rating (5+ games)">Avg rating</th>
+          <th class="l" data-field="best_team">Best team</th>
+          <th class="l" data-field="top_player">Top player</th>
+        </tr></thead>
+        <tbody data-draw="groupRows"></tbody>
+      </table>
+    </div>
+  </section>
   <section class="hr-sec" id="standings">
     <div class="hr-standhead">
       <div>
@@ -317,7 +317,31 @@
     </div>
     <p class="hr-sub" data-draw="standingsAsOf">—</p>
   </section>
-
+  <section class="hr-sec" id="upsets">
+    <div>
+      <h2>Upsets</h2>
+      <p class="hr-sub">Wins by a team with under a 40% pre-game chance (from points percentage and home ice).</p>
+    </div>
+    <article class="hr-story" id="upset-story" data-source="games ratings goals" data-draw="upsetStory"></article>
+    <div>
+      <h3>Biggest upsets this season</h3>
+    </div>
+    <div class="hr-scroll">
+      <table class="hr-full" data-source="games" data-row-key="game_id" aria-label="Biggest upsets of the season">
+        <thead><tr>
+          <th class="l" data-field="date">Date</th>
+          <th class="l" data-field="winner">Winner</th>
+          <th class="l" data-field="final">Score</th>
+          <th class="l" data-field="loser">Beat</th>
+          <th data-field="winner_pregame_pct">Win chance %</th>
+          <th class="l" data-field="winner_star">Winner's best</th>
+          <th class="l">Story</th>
+        </tr></thead>
+        <tbody data-draw="upsetRows"></tbody>
+      </table>
+    </div>
+  </section>
+  </div>
 
   <details id="method">
     <summary>How the ratings work</summary>
@@ -339,6 +363,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js?v=20261113c"></script>
+<script src="app.js?v=20261113e"></script>
 </body>
 </html>
