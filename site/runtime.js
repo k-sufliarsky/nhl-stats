@@ -23,13 +23,20 @@
   const fromUrl = new URLSearchParams(location.search).get('team');
   if (fromUrl && /^[A-Z]{3}$/.test(fromUrl)) params.team = fromUrl;
 
-  // Bust the browser cache once per data update: the files keep their names, the daily stamp changes.
-  const stamp = String(Math.floor(Date.now() / 36e5));
+  // The data files keep their names between updates. nhl_meta.json is always fetched fresh, and its update time
+  // tags every other file's URL, so a browser never reuses data from before the latest update.
+  const version = fetch('data/nhl_meta.json', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((m) => (m && m.generated_at) || String(Date.now()))
+    .catch(() => String(Date.now()));
   function load(id) {
     const src = SOURCES[id];
     const entry = (loaded[id] = { status: 'loading', data: [], message: null });
-    const url = src.url + '?v=' + stamp;
-    (src.type === 'csv' ? d3.csv(url) : d3.json(url))
+    version
+      .then((v) => {
+        const url = src.url + '?v=' + encodeURIComponent(v);
+        return src.type === 'csv' ? d3.csv(url) : d3.json(url);
+      })
       .then((d) => { entry.status = 'ok'; entry.data = d; })
       .catch((e) => { entry.status = 'error'; entry.message = String(e); })
       .finally(schedule);
