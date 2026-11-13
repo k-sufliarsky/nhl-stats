@@ -3,7 +3,7 @@
  "playoffs": false,
  "games": 309,
  "generated": "2026-11-13",
- "generated_at": "2026-11-13T13:41:58Z",
+ "generated_at": "2026-11-13T13:57:58Z",
  "last_game_day": "2026-11-12",
  "reference": {
   "F": {
@@ -19,7 +19,7 @@
    "median_raw": 0.11
   }
  },
- "scale": "rank -> 5 + 1.5 * normal quantile",
+ "scale": "rank -> 50 + 15 * normal quantile, 0-100",
  "weights": {
   "G": 0.75,
   "A1": 0.7,

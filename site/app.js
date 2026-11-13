@@ -2,8 +2,8 @@
   const fmt1 = d3.format('.1f');
   const fmt2 = d3.format('.2f');
   const fmt0 = d3.format('.0f');
-  // Player ratings run 0-100 (50 = average player); game scores run 0-10. Chips colour on the 0-10 scale.
-  const rchip = (v) => chip(v / 10, fmt0(v));
+  // Every score and rating on the site runs 0-100, with 50 = average.
+  const rchip = (v) => chip(v);
   const dateFmt = d3.utcFormat('%b %-d');
   const longDate = d3.utcFormat('%B %-d, %Y');
   const parseDate = d3.utcParse('%Y-%m-%d');
@@ -11,8 +11,8 @@
 
   const hrColor = (v) => {
     if (v == null || isNaN(v)) return 'transparent';
-    const pct = Math.round(8 + Math.min(1, Math.abs(v - 5) / 4.5) * 52);
-    return 'color-mix(in oklab, var(' + (v >= 5 ? '--color-ok' : '--color-bad') + ') ' + pct + '%, var(--color-panel))';
+    const pct = Math.round(8 + Math.min(1, Math.abs(v - 50) / 45) * 52);
+    return 'color-mix(in oklab, var(' + (v >= 50 ? '--color-ok' : '--color-bad') + ') ' + pct + '%, var(--color-panel))';
   };
   const team = () => dash.params().team || '';
   // Sections that need a team: hidden until one is picked, with a hint in their place.
@@ -122,7 +122,7 @@
           delta: round2(mean(ratingsInOrder.slice(-5)) - mean(ratingsInOrder)),
           spread: round2(Math.sqrt(mean(ratingsInOrder.map((x) => (x - mean(ratingsInOrder)) ** 2)))),
         };
-      }).sort((a, b) => (b.rating ?? b.avg * 10) - (a.rating ?? a.avg * 10));
+      }).sort((a, b) => (b.rating ?? b.avg) - (a.rating ?? a.avg));
     },
   });
 
@@ -176,17 +176,17 @@
   });
   textDraw('leader', (s) => s.leader);
   textDraw('teamName', (s) => s.team);
-  markDraw('leaderAvg', 'leader_avg', fmt2);
+  markDraw('leaderAvg', 'leader_avg', fmt0);
   markDraw('games', 'games', String);
   textDraw('lastGame', (s) => gameLabel(s));
   textDraw('lastBest', (s) => s.last_best);
-  markDraw('lastBestRating', 'last_best_rating', fmt1);
+  markDraw('lastBestRating', 'last_best_rating', fmt0);
 
   function chip(v, text) {
     const span = document.createElement('span');
     span.className = 'hr-chip';
     span.style.background = hrColor(v);
-    span.textContent = text ?? (v == null ? '—' : fmt1(v));
+    span.textContent = text ?? (v == null ? '—' : fmt0(v));
     return span;
   }
 
@@ -201,7 +201,7 @@
       tr.dataset.key = p.team + ',' + p.player_id;
       const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
       td(p.name, 'l'); td(p.team, 'l'); td(p.pos, 'l'); td(String(p.gp));
-      const rt = p.rating ?? p.avg * 10;
+      const rt = p.rating ?? p.avg;
       const cell = document.createElement('td');
       const wrap = document.createElement('span'); wrap.className = 'hr-bar';
       const bar = document.createElement('i'); const fill = document.createElement('b');
@@ -209,9 +209,9 @@
       bar.appendChild(fill); wrap.append(bar, rchip(rt));
       cell.appendChild(wrap); tr.appendChild(cell);
       if (p.rating_sd != null) cell.title = 'Likely range ' + fmt0(Math.max(0, rt - p.rating_sd)) + '–' + fmt0(Math.min(100, rt + p.rating_sd));
-      if (p.since_start == null) td('—'); else td((p.since_start > 0 ? '+' : '') + fmt1(p.since_start), p.since_start >= 0.5 ? 'pos' : (p.since_start <= -0.5 ? 'neg' : ''));
-      const avg = document.createElement('td'); avg.appendChild(chip(p.avg, fmt2(p.avg))); tr.appendChild(avg);
-      const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt2(p.last5))); tr.appendChild(l5);
+      if (p.since_start == null) td('—'); else td((p.since_start > 0 ? '+' : '') + fmt1(p.since_start), p.since_start >= 1 ? 'pos' : (p.since_start <= -1 ? 'neg' : ''));
+      const avg = document.createElement('td'); avg.appendChild(chip(p.avg, fmt0(p.avg))); tr.appendChild(avg);
+      const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt0(p.last5))); tr.appendChild(l5);
       if (p.drive == null) td('—'); else { const d = document.createElement('td'); d.appendChild(rchip(p.drive)); tr.appendChild(d); }
       tr.className = 'pick'; tr.tabIndex = 0;
       tr.addEventListener('click', () => openPlayer(p.player_id));
@@ -223,7 +223,7 @@
   dash.draw('legend', (el) => {
     el.replaceChildren();
     const lab = document.createElement('span'); lab.textContent = 'Rating'; el.appendChild(lab);
-    for (const [v, t] of [[1, '0–2 rough'], [3.5, '3–4'], [5, '5 average'], [6.5, '6–7'], [8.5, '8+ standout']]) el.appendChild(chip(v, t));
+    for (const [v, t] of [[10, '0–20 rough'], [35, '30–40'], [50, '50 average'], [65, '60–70'], [85, '80+ standout']]) el.appendChild(chip(v, t));
   });
 
   function teamRows() {
@@ -262,13 +262,13 @@
         td.className = 'c' + (r ? '' : ' empty');
         if (!r) { td.textContent = '·'; continue; }
         const v = +r.rating;
-        td.textContent = fmt1(v);
+        td.textContent = fmt0(v);
         td.style.background = hrColor(v);
         td.tabIndex = 0;
         td.dataset.source = 'ratings'; td.dataset.field = 'rating';
         td.dataset.where = 'game_id=' + r.game_id + '&player_id=' + r.player_id;
         const show = () => showTooltip(td.getBoundingClientRect(), [
-          r.name + ' · ' + fmt1(v), gameLabel(r),
+          r.name + ' · ' + fmt0(v), gameLabel(r),
           statLine(r) + (r.pos === 'G' ? '' : ' · 5v5 on ice: xG ' + r.xGF5 + '–' + r.xGA5 + ', attempts ' + r.CF + '–' + r.CA),
           pctLine(r)].filter(Boolean));
         td.addEventListener('mouseenter', show);
@@ -454,7 +454,7 @@
     const height = 250;
     const svg = d3.create('svg').attr('viewBox', `0 0 ${width} ${height}`).attr('width', '100%')
       .attr('role', 'img').attr('aria-label', opts.label);
-    const yTicks = [0, 2, 4, 6, 8, 10];
+    const yTicks = [0, 20, 40, 60, 80, 100];
     const probe = svg.append('g').attr('class', 'tick');
     el.appendChild(svg.node());
     const tw = d3.max(yTicks, (t) => { const n = probe.append('text').text(t).node(); return n.getComputedTextLength(); }) || 14;
@@ -462,7 +462,7 @@
     const m = { top: 12, right: opts.right ? 34 : 16, bottom: 26, left: Math.ceil(tw) + 18 };
     const x = d3.scaleUtc().domain(d3.extent(pts, (p) => p.d)).range([m.left, width - m.right]);
     if (pts.length === 1) x.domain([d3.utcDay.offset(pts[0].d, -1), d3.utcDay.offset(pts[0].d, 1)]);
-    const y = d3.scaleLinear().domain([0, 10]).range([height - m.bottom, m.top]);
+    const y = d3.scaleLinear().domain([0, 100]).range([height - m.bottom, m.top]);
 
     svg.append('g').attr('transform', `translate(${m.left},0)`)
       .call(d3.axisLeft(y).tickValues(yTicks).tickSize(-(width - m.left - m.right)).tickPadding(8));
@@ -476,7 +476,7 @@
     svg.append('g').attr('transform', `translate(0,${height - m.bottom})`)
       .call(d3.axisBottom(x).ticks(Math.min(xTickCount, pts.length)).tickFormat(d3.utcFormat('%b %-d')).tickSize(0).tickPadding(10));
 
-    svg.append('line').attr('x1', m.left).attr('x2', width - m.right).attr('y1', y(5)).attr('y2', y(5))
+    svg.append('line').attr('x1', m.left).attr('x2', width - m.right).attr('y1', y(50)).attr('y2', y(50))
       .style('stroke', 'var(--cds-chart-reference)').style('stroke-width', 1.5).style('stroke-dasharray', '5 4');
 
     if (pts.length > 1 && pts.every((p) => p.lo != null)) {
@@ -516,7 +516,7 @@
       .on('pointerleave', () => { hideTooltip(); focus.style('display', 'none'); });
   }
 
-  const sign = (v) => (v > 0 ? '+' : '') + fmt2(v);
+  const sign = (v) => (v > 0 ? '+' : '') + fmt1(v);
 
   // Method notes filled from the model's own numbers (nhl_meta.json).
   dash.draw('methodXg', (el) => {
@@ -551,13 +551,13 @@
     if (!row) { el.textContent = '—'; return; }
     const W = 'team=' + encodeURIComponent(row.team);
     const diff = row.last5 - row.first5;
-    const dir = Math.abs(diff) < 0.15 ? 'about the same as' : (diff > 0 ? 'up from' : 'down from');
+    const dir = Math.abs(diff) < 1.5 ? 'about the same as' : (diff > 0 ? 'up from' : 'down from');
     const bd = parseDate(row.best_date), wd = parseDate(row.worst_date);
     el.replaceChildren(
-      row.team + "'s team rating over the last five games is ", mark('b', 'teamForm', 'last5', W, fmt2(row.last5)), ', ' + dir + ' ',
-      mark('span', 'teamForm', 'first5', W, fmt2(row.first5)), ' in the first five. Best game: ',
-      mark('span', 'teamForm', 'best_rating', W, fmt2(row.best_rating)), ' (' + row.best_result + ' ' + row.best_score + (String(row.best_home) === 'True' ? ' vs ' : ' at ') + row.best_opp + ', ' + (bd ? dateFmt(bd) : '') + '). Worst: ',
-      mark('span', 'teamForm', 'worst_rating', W, fmt2(row.worst_rating)), ' (' + row.worst_result + ' ' + row.worst_score + (String(row.worst_home) === 'True' ? ' vs ' : ' at ') + row.worst_opp + ', ' + (wd ? dateFmt(wd) : '') + ').');
+      row.team + "'s team rating over the last five games is ", mark('b', 'teamForm', 'last5', W, fmt0(row.last5)), ', ' + dir + ' ',
+      mark('span', 'teamForm', 'first5', W, fmt0(row.first5)), ' in the first five. Best game: ',
+      mark('span', 'teamForm', 'best_rating', W, fmt0(row.best_rating)), ' (' + row.best_result + ' ' + row.best_score + (String(row.best_home) === 'True' ? ' vs ' : ' at ') + row.best_opp + ', ' + (bd ? dateFmt(bd) : '') + '). Worst: ',
+      mark('span', 'teamForm', 'worst_rating', W, fmt0(row.worst_rating)), ' (' + row.worst_result + ' ' + row.worst_score + (String(row.worst_home) === 'True' ? ' vs ' : ' at ') + row.worst_opp + ', ' + (wd ? dateFmt(wd) : '') + ').');
   });
 
   dash.draw('teamChart', (el) => {
@@ -571,7 +571,7 @@
     ratingChart(el, pts, {
       label: team() + ' team rating by game this season, with a five-game rolling average',
       title: (p) => p.g.result + ' ' + p.g.score + (String(p.g.home) === 'True' ? ' vs ' : ' at ') + p.g.opp,
-      lines: (p) => [longDate(p.d), 'Team rating ' + fmt2(p.v) + ' · 5-game average ' + fmt2(p.roll)],
+      lines: (p) => [longDate(p.d), 'Team rating ' + fmt0(p.v) + ' · 5-game average ' + fmt0(p.roll)],
     });
   });
 
@@ -583,19 +583,19 @@
     const medianSpread = d3.median(players, (q) => q.spread);
     const parts = [];
     if (p.rating != null) {
-      parts.push(p.name + "'s rating is ", mark('b', 'season', 'rating', W, fmt0(p.rating)), ' / 100');
+      parts.push(p.name + "'s rating is ", mark('b', 'season', 'rating', W, fmt0(p.rating)));
       if (p.start != null) parts.push(' (started the season at ', mark('span', 'season', 'start', W, fmt0(p.start)), ')');
       parts.push('. ');
     }
     parts.push(
-      (p.rating != null ? 'Game scores have averaged ' : p.name + ' has averaged '), mark('b', 'season', 'avg', W, fmt2(p.avg)), ' over ', mark('span', 'season', 'gp', W, String(p.gp)),
-      ' games, ranging from ', mark('span', 'season', 'worst', W, fmt1(p.worst)), ' to ', mark('span', 'season', 'best', W, fmt1(p.best)), '. ');
+      (p.rating != null ? 'Game scores have averaged ' : p.name + ' has averaged '), mark('b', 'season', 'avg', W, fmt0(p.avg)), ' over ', mark('span', 'season', 'gp', W, String(p.gp)),
+      ' games, ranging from ', mark('span', 'season', 'worst', W, fmt0(p.worst)), ' to ', mark('span', 'season', 'best', W, fmt0(p.best)), '. ');
     if (p.gp >= 6) {
-      const word = Math.abs(p.delta) < 0.25 ? 'level with' : (p.delta > 0 ? 'above' : 'below');
-      parts.push('The last five games average ', mark('b', 'season', 'last5', W, fmt2(p.last5)), ', ' + word + ' the season (',
+      const word = Math.abs(p.delta) < 2.5 ? 'level with' : (p.delta > 0 ? 'above' : 'below');
+      parts.push('The last five games average ', mark('b', 'season', 'last5', W, fmt0(p.last5)), ', ' + word + ' the season (',
         mark('span', 'season', 'delta', W, sign(p.delta)), '). ');
       if (medianSpread != null) {
-        parts.push('Game-to-game spread is ', mark('span', 'season', 'spread', W, fmt2(p.spread)),
+        parts.push('Game-to-game spread is ', mark('span', 'season', 'spread', W, fmt0(p.spread)),
           p.spread > medianSpread * 1.15 ? ', streakier than most of the team.' : (p.spread < medianSpread * 0.85 ? ', steadier than most of the team.' : ', typical for the team.'));
       }
     } else {
@@ -619,29 +619,27 @@
     const pts = (groupOf(d.data, 'teamPlayer', (r) => r.team + ',' + r.player_id).get(p.team + ',' + p.player_id) || [])
       .map((r) => {
         const hasForm = r.form != null;
-        // the rating (0-100) is drawn on the same axis as game scores (0-10), divided by ten
-        return { d: parseDate(r.date), v: r.rating, roll: hasForm ? r.form / 10 : r.roll5, r, fill: hrColor(r.rating),
-          lo: hasForm && r.form_sd != null ? Math.max(0, r.form - r.form_sd) / 10 : null,
-          hi: hasForm && r.form_sd != null ? Math.min(100, r.form + r.form_sd) / 10 : null };
+        return { d: parseDate(r.date), v: r.rating, roll: hasForm ? r.form : r.roll5, r, fill: hrColor(r.rating),
+          lo: hasForm && r.form_sd != null ? Math.max(0, r.form - r.form_sd) : null,
+          hi: hasForm && r.form_sd != null ? Math.min(100, r.form + r.form_sd) : null };
       });
     ratingChart(el, pts, {
-      label: p.name + "'s score in each game this season (0-10, left axis), with the player's rating after each game (0-100, right axis)",
-      right: pts.some((q) => q.r.form != null),
-      title: (q) => p.name + ' · game score ' + fmt1(q.v),
+      label: p.name + "'s score in each game this season, with the player's rating after each game, both 0-100",
+      title: (q) => p.name + ' · game score ' + fmt0(q.v),
       lines: (q) => [longDate(q.d) + ', ' + q.r.result + ' ' + q.r.score + (String(q.r.home) === 'True' ? ' vs ' : ' at ') + q.r.opp,
         statLine(q.r), pctLine(q.r),
-        q.r.form != null ? 'Rating after this game ' + fmt0(q.r.form) + ' / 100' + (q.r.form_sd != null ? ' (likely ' + fmt0(q.lo * 10) + '–' + fmt0(q.hi * 10) + ')' : '') : '5-game average ' + fmt2(q.roll)].filter(Boolean),
+        q.r.form != null ? 'Rating after this game ' + fmt0(q.r.form) + (q.r.form_sd != null ? ' (likely ' + fmt0(q.lo) + '–' + fmt0(q.hi) + ')' : '') : '5-game average ' + fmt0(q.roll)].filter(Boolean),
     });
   });
 
   function sparkline(values) {
     const w = 84, h = 22;
     const svg = d3.create('svg').attr('class', 'hr-spark').attr('width', w).attr('height', h).attr('viewBox', `0 0 ${w} ${h}`)
-      .attr('role', 'img').attr('aria-label', 'Last ' + values.length + ' ratings: ' + values.map(fmt1).join(', '));
+      .attr('role', 'img').attr('aria-label', 'Last ' + values.length + ' ratings: ' + values.map(fmt0).join(', '));
     if (values.length < 2) return svg.node();
     const x = d3.scaleLinear().domain([0, values.length - 1]).range([3, w - 3]);
-    const y = d3.scaleLinear().domain([0, 10]).range([h - 3, 3]);
-    svg.append('line').attr('x1', 0).attr('x2', w).attr('y1', y(5)).attr('y2', y(5)).style('stroke', 'var(--cds-chart-reference)').style('stroke-dasharray', '2 2');
+    const y = d3.scaleLinear().domain([0, 100]).range([h - 3, 3]);
+    svg.append('line').attr('x1', 0).attr('x2', w).attr('y1', y(50)).attr('y2', y(50)).style('stroke', 'var(--cds-chart-reference)').style('stroke-dasharray', '2 2');
     svg.append('path').datum(values).attr('d', d3.line().x((v, i) => x(i)).y((v) => y(v)))
       .style('fill', 'none').style('stroke', dash.colors[0]).style('stroke-width', 1.5);
     svg.append('circle').attr('cx', x(values.length - 1)).attr('cy', y(values[values.length - 1])).attr('r', 2.5).style('fill', dash.colors[0]);
@@ -670,8 +668,8 @@
         tr.className = 'pick' + (cur && cur.player_id === p.player_id ? ' on' : '');
         tr.tabIndex = 0;
         const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
-        td(league ? p.name + ' (' + p.team + ')' : p.name, 'l'); td(p.pos, 'l'); td(String(p.gp)); td(fmt2(p.avg));
-        const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt2(p.last5))); tr.appendChild(l5);
+        td(league ? p.name + ' (' + p.team + ')' : p.name, 'l'); td(p.pos, 'l'); td(String(p.gp)); td(fmt0(p.avg));
+        const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt0(p.last5))); tr.appendChild(l5);
         td(sign(p.delta), p.delta > 0 ? 'pos' : 'neg');
         const games = (recent.get(p.team + ',' + p.player_id) || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-10).map((g) => g.rating);
         const sp = document.createElement('td'); sp.className = 'l'; sp.appendChild(sparkline(games)); tr.appendChild(sp);
@@ -694,7 +692,7 @@
     if (!players.length) { el.textContent = '—'; return; }
     const cur = currentPlayer();
     for (const [grp, label] of [['F', 'Forwards'], ['D', 'Defense'], ['G', 'Goalies']]) {
-      const list = d3.sort(players.filter((p) => p.group === grp), (p) => -(p.rating ?? p.avg * 10));
+      const list = d3.sort(players.filter((p) => p.group === grp), (p) => -(p.rating ?? p.avg));
       if (!list.length) continue;
       const box = document.createElement('div');
       const h = document.createElement('h4'); h.textContent = label;
@@ -703,10 +701,10 @@
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'hr-player';
         b.setAttribute('aria-pressed', String(!!cur && cur.player_id === p.player_id));
-        b.setAttribute('aria-label', p.name + ', ' + p.pos + ', rating ' + fmt0(p.rating ?? p.avg * 10) + ' after ' + p.gp + ' games');
+        b.setAttribute('aria-label', p.name + ', ' + p.pos + ', rating ' + fmt0(p.rating ?? p.avg) + ' after ' + p.gp + ' games');
         const n = document.createElement('span'); n.className = 'pn'; n.textContent = p.name;
         const pp = document.createElement('span'); pp.className = 'pp'; pp.textContent = p.pos + ' · ' + p.gp; n.appendChild(pp);
-        b.append(n, rchip(p.rating ?? p.avg * 10));
+        b.append(n, rchip(p.rating ?? p.avg));
         b.addEventListener('click', () => {
           state.player = state.player === p.player_id ? null : p.player_id;   // click again to clear
           ['playerGrid', 'playerText', 'playerChart', 'hotRows'].forEach((x) => dash.draw(x));
@@ -760,7 +758,7 @@
         td(league ? r.team + ' · ' + r.names : r.names, 'l'); td(String(r.games)); td(String(r.toi_min)); td(String(r.CF)); td(String(r.CA));
         td(r.cf_pct == null ? '—' : String(r.cf_pct), r.cf_pct == null ? '' : (r.cf_pct >= 50 ? 'pos' : 'neg'));
         td(String(r.GF)); td(String(r.GA));
-        const c = document.createElement('td'); c.appendChild(r.avg_rating == null ? document.createTextNode('—') : chip(r.avg_rating, fmt2(r.avg_rating))); tr.appendChild(c);
+        const c = document.createElement('td'); c.appendChild(r.avg_rating == null ? document.createTextNode('—') : chip(r.avg_rating, fmt0(r.avg_rating))); tr.appendChild(c);
         tb.appendChild(tr);
       }
     }
@@ -903,10 +901,12 @@
       const recap = safeUrl(r.recap_video_url), cond = safeUrl(r.condensed_video_url), yt = safeUrl(r.youtube_url);
       const ytExact = r.youtube_exact === 'True';
       const btn = (label, url, cls, title) => { const x = link(label, url); x.className = cls; x.title = title; acts.appendChild(x); };
-      if (yt && ytExact) btn('▶ Highlights', yt, 'btn btn-primary', 'The NHL\'s highlights on YouTube (title names only the teams)');
-      if (recap) btn(ytExact ? 'NHL recap' : '▶ Recap', recap, ytExact ? 'btn' : 'btn btn-primary', 'About 5 minutes, opens the NHL video player');
+      // Same three buttons on every game. Highlights opens the NHL's YouTube video when it has been matched,
+      // otherwise a YouTube search for its title (whose other results may show the score).
+      if (yt) btn('▶ Highlights', yt, 'btn btn-primary', ytExact ? 'The NHL\'s highlights on YouTube (title names only the teams)'
+        : 'Searches YouTube for the NHL\'s highlights of this game. Other results may show the score.');
+      if (recap) btn(yt ? 'NHL recap' : '▶ NHL recap', recap, yt ? 'btn' : 'btn btn-primary', 'About 5 minutes, opens the NHL video player');
       if (cond) btn('Condensed', cond, 'btn', 'About 10 minutes, opens the NHL video player');
-      if (yt && !ytExact) btn('YouTube', yt, 'btn', 'Searches YouTube for the NHL\'s highlights of this game. Other results may show the score.');
       if (!recap && !cond && !yt) { const n = document.createElement('span'); n.className = 'game-novid'; n.textContent = 'Video not posted yet'; acts.appendChild(n); }
       const rv = document.createElement('button'); rv.type = 'button'; rv.className = 'btn btn-ghost';
       rv.textContent = shown ? 'Hide score' : 'Reveal score';
@@ -984,7 +984,7 @@
       for (const [i, [n, v]] of [[g.away_star, g.away_star_avg], [g.home_star, g.home_star_avg]].entries()) {
         if (!n) continue;
         if (i && watch.childNodes.length > 1) watch.append('  ');
-        watch.append(n + ' ', chip(+v, fmt2(+v)));
+        watch.append(n + ' ', chip(+v, fmt0(+v)));
       }
       notes.appendChild(watch);
       card.appendChild(notes);
@@ -1063,11 +1063,11 @@
     tile('Standing', ordinalOf(+t.division_rank) + ' ' + t.division, ordinalOf(+t.conference_rank) + ' in the ' + t.conference + ' · ' + ordinalOf(+t.league_rank) + ' overall');
     if (form) {
       const d = form.last5 - form.first5;
-      tile('Team form', [mark('span', 'teamForm', 'last5', W, fmt2(form.last5))],
-        ['last 5 games · ', (Math.abs(d) < 0.15 ? 'steady' : (d > 0 ? '▲ ' : '▼ ') + fmt2(Math.abs(d))) + ' vs first 5'],
-        Math.abs(d) < 0.15 ? '' : (d > 0 ? 'is-up' : 'is-down'));
+      tile('Team form', [mark('span', 'teamForm', 'last5', W, fmt0(form.last5))],
+        ['last 5 games · ', (Math.abs(d) < 1.5 ? 'steady' : (d > 0 ? '▲ ' : '▼ ') + fmt1(Math.abs(d))) + ' vs first 5'],
+        Math.abs(d) < 1.5 ? '' : (d > 0 ? 'is-up' : 'is-down'));
     }
-    if (s) tile('Top player', s.leader, ['averaging ', mark('b', 'summary', 'leader_avg', W, fmt2(s.leader_avg)), ' over ' + s.games + ' games']);
+    if (s) tile('Top player', s.leader, ['averaging ', mark('b', 'summary', 'leader_avg', W, fmt0(s.leader_avg)), ' over ' + s.games + ' games']);
     el.append(head, tiles);
     if (s) {
       const last = document.createElement('p'); last.className = 'th-last';

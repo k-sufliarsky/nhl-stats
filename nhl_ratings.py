@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Per-game 0-10 player ratings for every NHL team, built on the public NHL API
+Per-game 0-100 player scores and running 0-100 ratings for every NHL team, built on the public NHL API
 (endpoints documented at https://github.com/Zmalski/NHL-API-Reference).
 
 Skaters  -> Game Score (Dom Luszczyszyn's weights) using boxscore + play-by-play + shift charts.
 Goalies  -> Goals Saved Above Expected (GSAx) from a small expected-goals model fitted on
             every unblocked shot in the NHL this season.
 Both raw scores are ranked against every NHL player-game this season (same game type), separately for
-forwards, defensemen and goalies, and the rank is placed on a bell curve centred on 5 (1.5 points per
-standard deviation), clipped to [0, 10]. Ranking first keeps the scale honest even though Game Score is
+forwards, defensemen and goalies, and the rank is placed on a bell curve centred on 50 (15 points per
+standard deviation), clipped to [0, 100]. Ranking first keeps the scale honest even though Game Score is
 lopsided (a few huge nights, many quiet ones):
-    5 = average game, 7 = top ~9%, 8 = top ~2%, 9 = top ~0.4%, 10 = top ~0.05% (a few games a season).
+    50 = average game, 70 = top ~9%, 80 = top ~2%, 90 = top ~0.4%, 100 = top ~0.05% (a few games a season).
 
 Writes, for the whole league (site/data/, which the static site reads):
     nhl_ratings.csv    one row per player per game: rating and the stats behind it
@@ -43,7 +43,7 @@ CACHE = os.path.join(HERE, "cache")
 # Game Score weights (Luszczyszyn, 2016)
 W = dict(G=0.75, A1=0.70, A2=0.55, SOG=0.075, BLK=0.05, PD=0.15, PT=-0.15,
          FOW=0.01, FOL=-0.01, CF=0.05, CA=-0.05, GF=0.15, GA=-0.15)
-SPREAD = 1.5          # rating points per standard deviation of the bell curve the ranks are placed on
+SPREAD = 15           # game-score points (0-100 scale) per standard deviation of the bell curve the ranks are placed on
 CORSI = {"shot-on-goal", "missed-shot", "blocked-shot", "goal"}
 FENWICK = {"shot-on-goal", "missed-shot", "goal"}
 
@@ -378,8 +378,8 @@ def league_games(ids, boxes, pbps, by_game, gtype):
             gamecenter_url=gc, start_utc=box.get("startTimeUTC", ""), venue=(box.get("venue") or {}).get("default", ""),
             recap_video_url=videos[gid][0], condensed_video_url=videos[gid][1],
             youtube_url=(f"https://www.youtube.com/watch?v={youtube[gid]}" if gid in youtube else
-                         "https://www.youtube.com/results?search_query=" + urllib.parse.quote(
-                             '"' + yt_title(team_names[gid][0], team_names[gid][1], box["gameDate"]) + '"')),
+                         "https://www.youtube.com/results?search_query=" + urllib.parse.quote(   # no quotes: quoted
+                             yt_title(team_names[gid][0], team_names[gid][1], box["gameDate"]))),           # searches return Shorts
             youtube_exact=gid in youtube))
         names = {r["playerId"]: f'{r["firstName"]["default"]} {r["lastName"]["default"]}' for r in pbp.get("rosterSpots", [])}
         abbr = {h["id"]: h["abbrev"], aw["id"]: aw["abbrev"]}
@@ -693,7 +693,7 @@ def player_table(rows, model, priors):
                 start = round(M.to_hundred(m, f["mu"][grp], f["sd"][grp]), 1)
         a = adj.get(pid)
         out.append(dict(player_id=pid, name=last["name"], team=last["team"], pos=last["pos"], group=grp, gp=len(games),
-                        avg=round(sum(g["rating"] for g in games) / len(games), 2),
+                        avg=round(sum(g["rating"] for g in games) / len(games), 1),
                         form=last.get("form", ""), form_sd=last.get("form_sd", ""), form_start=start,
                         drive=last.get("drive", ""), drive_xgd=last.get("drive_xgd", ""), gsax100=last.get("gsax100", ""),
                         toi5=round(sum(float(g.get("toi5") or 0) for g in games), 1),
@@ -722,7 +722,7 @@ def season_window(season):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Per-game 0-10 player ratings for the whole NHL.")
+    ap = argparse.ArgumentParser(description="Per-game 0-100 player scores for the whole NHL.")
     ap.add_argument("--season", default="now", help="e.g. 20252026 (default: current season)")
     ap.add_argument("--playoffs", action="store_true", help="rate playoff games instead of the regular season")
     ap.add_argument("--team", help="team code such as MTL: also print its summary and write <team>_ratings.csv")
@@ -775,7 +775,7 @@ def main():
                 if which == "goalie":
                     row["gsax100"] = round(m * 100, 2)
 
-    # --- 0-10: rank every player-game within its position group, then place the rank on a bell curve.
+    # --- 0-100: rank every player-game within its position group, then place the rank on a bell curve.
     # (A straight z-score sent ~1 in 60 forward games to 10, because Game Score has a long right tail.)
     from statistics import NormalDist
     bell = NormalDist()
@@ -792,7 +792,7 @@ def main():
             pct = ((i + j) / 2 + 0.5) / n
             for r in group[i:j + 1]:
                 r["pct"] = round(pct * 100, 1)
-                r["rating"] = round(min(10.0, max(0.0, 5 + SPREAD * bell.inv_cdf(pct))), 1)
+                r["rating"] = int(round(min(100.0, max(0.0, 50 + SPREAD * bell.inv_cdf(pct)))))
             i = j + 1
 
     # --- game context for every row, from each player's own team's point of view
@@ -833,7 +833,7 @@ def main():
     write_csv("nhl_players.csv", players, list(players[0].keys()))
     meta = dict(season=str(season_id), playoffs=a.playoffs, games=len(all_ids), generated=time.strftime("%Y-%m-%d"),
                 generated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), last_game_day=max(g["date"] for g in games_out),
-                reference=ref, scale="rank -> 5 + %g * normal quantile" % SPREAD, weights=W, xg_onice_weight=k,
+                reference=ref, scale="rank -> 50 + %g * normal quantile, 0-100" % SPREAD, weights=W, xg_onice_weight=k,
                 xg=dict(shots=len(all_shots), frozen=bool(model), trained_on=model["trained_on"] if model else [str(season_id)],
                         coef=dict(zip(xg_model["names"], xg_model["coef"]))),
                 model=dict(built=model["built"], filters={w: {k_: f[k_] for k_ in ("params", "mu", "sd", "check") if k_ in f}
@@ -856,7 +856,7 @@ def main():
         print(f"\n{title}\n{'Player':<22}{'Team':<5}{'Pos':<4}{'GP':>3}{'Avg':>6}{'Best':>6}{'Worst':>7}")
         ranked = sorted(((k, v) for k, v in agg.items() if len(v) >= min_gp), key=lambda kv: -np.mean(kv[1]))
         for (n, t, pos), v in ranked[: None if a.team else 20]:
-            print(f"{n:<22}{t:<5}{pos:<4}{len(v):>3}{np.mean(v):>6.2f}{max(v):>6.1f}{min(v):>7.1f}")
+            print(f"{n:<22}{t:<5}{pos:<4}{len(v):>3}{np.mean(v):>6.1f}{max(v):>6.0f}{min(v):>7.0f}")
     if a.team:
         team_rows = [r for r in rows if r["team"] == a.team]
         if not team_rows:

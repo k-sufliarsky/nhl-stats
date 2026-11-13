@@ -1,6 +1,6 @@
 # NHL Game Ratings
 
-A 0–10 rating for every NHL player in every game, plus a spoiler-free list of the latest games, standings, trends and line combinations.
+A 0–100 score for every NHL player in every game, a 0–100 running rating for every player, plus a spoiler-free list of the latest games, standings, trends and line combinations.
 
 **Live site:** https://k-sufliarsky.github.io/nhl-stats/
 
@@ -19,7 +19,7 @@ Two layers, following the usual split in hockey analytics: a **game score** desc
 **Game score (layer 1).**
 - **Skaters** get an *xG Game Score*: Dom Luszczyszyn's published Game Score (0.75·G + 0.7·A1 + 0.55·A2 + 0.075·SOG + 0.05·BLK + 0.15·PD − 0.15·PT + 0.01·FOW − 0.01·FOL + 0.05·CF − 0.05·CA + 0.15·GF − 0.15·GA, with CF/CA and GF/GA at 5-on-5 on ice), with goals replaced by individual expected goals and the on-ice terms replaced by on-ice 5-on-5 xG for and against. The on-ice xG weight is set so a season's totals match the published terms. The published Game Score is stored too (`gs`).
 - **Goalies** get goals saved above expected (GSAx), and goalie Game Score (−0.75·GA + 0.1·SV) is stored.
-- The site's 0–10 game score ranks each game against every game this season at the position (forwards, defense, goalies) and places the rank on a bell curve centred on 5 (1.5 points per standard deviation): 7 beats about 91% of games, 8 about 98%, 9 about 99.6%.
+- The site's game score ranks each game against every game this season at the position (forwards, defense, goalies) and places the rank on a 0–100 bell curve centred on 50 (15 points per standard deviation): 70 beats about 91% of games, 80 about 98%, 90 about 99.6%.
 
 **Rating (layer 2).** A Kalman filter per player (`rating_model.py`):
 
@@ -33,7 +33,7 @@ each game:    v = v + q_game · (team games since the player's last game)   (+5 
 - **Play-driving** (skaters): y = on-ice 5-on-5 xG difference per 60 minutes; noise s² / 5-on-5 minutes, so a short night counts less.
 - **Goalies**: y = GSAx per unblocked shot faced; noise s² / shots.
 
-`s²`, `q_game`, `q_season`, `ρ` and the starting uncertainty for new players are fitted for each filter by maximising one-game-ahead predictive likelihood over the 2024-25 and 2025-26 seasons. Every player's rating at the end of 2025-26 is the starting point for 2026-27 (`model/priors_20262027.json`). On the site, ratings run 0–100: 50 is the position average and each 10 points is one standard deviation of last season's spread among regulars (70 ≈ top 2%). Game scores stay on 0–10.
+`s²`, `q_game`, `q_season`, `ρ` and the starting uncertainty for new players are fitted for each filter by maximising one-game-ahead predictive likelihood over the 2024-25 and 2025-26 seasons. Every player's rating at the end of 2025-26 is the starting point for 2026-27 (`model/priors_20262027.json`). On the site, ratings run 0–100: 50 is the position average and each 10 points is one standard deviation of last season's spread among regulars (70 ≈ top 2%). Game scores use the same 0–100 scale, so 50 is average for both.
 
 **Teammate-adjusted impact.** A ridge regression (RAPM) of 5-on-5 xG per 60 on the ten skaters on the ice, shrunk toward last season's result, gives each skater's own offensive and defensive effect (`nhl_players.csv`: `adj_off`, `adj_def`, `adj_net`). The penalty is chosen by odd/even-game cross-validation.
 
@@ -105,7 +105,7 @@ This is an independent, non-commercial fan project. It is not affiliated with, e
 
 **API documentation.** Endpoints were found with [NHL-API-Reference](https://github.com/Zmalski/NHL-API-Reference) by Zmalski, MIT License. That license covers its documentation only, not NHL data.
 
-**Rating method.** The skater rating uses the Game Score formula published by Dom Luszczyszyn. The expected-goals model, line detection, upset model and 0–10 scale are this project's own.
+**Rating method.** The skater rating uses the Game Score formula published by Dom Luszczyszyn. The expected-goals model, line detection, upset model and 0–100 scales are this project's own.
 
 **Third-party code.**
 - [d3.js](https://d3js.org) 7.9.0, Copyright 2010–2023 Mike Bostock, ISC License. Copy in `site/vendor/d3-LICENSE.txt`.
