@@ -307,8 +307,8 @@
       const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt0(p.last5))); tr.appendChild(l5);
       if (p.drive == null) td('—'); else { const d = document.createElement('td'); d.appendChild(rchip(p.drive)); tr.appendChild(d); }
       tr.className = 'pick' + (state.player === p.player_id ? ' on' : ''); tr.tabIndex = 0;
-      tr.addEventListener('click', () => openPlayer(p.player_id));
-      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id); } });
+      tr.addEventListener('click', () => openPlayer(p.player_id, tr));
+      tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id, tr); } });
       tb.appendChild(tr);
     }
   });
@@ -512,16 +512,26 @@
   });
 
   const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function openPlayer(id) {
+  // Open (or close) a player's chart. The row that was clicked stays exactly where it was on screen.
+  function openPlayer(id, anchor) {
+    const before = anchor && anchor.isConnected ? anchor.getBoundingClientRect().top : null;
     state.player = state.player === id ? null : id;      // click the same player again to clear
     markPlayerRows();
     syncPlayerPanel();
     dash.draw('playerStats'); dash.draw('playerName');
     ['playerGrid', 'playerText', 'playerChart', 'hotRows'].forEach((n) => dash.draw(n));
+    if (before != null && anchor.isConnected) {
+      const shift = anchor.getBoundingClientRect().top - before;
+      if (Math.abs(shift) > 1) window.scrollBy(0, shift);
+    }
+    const split = document.querySelector('.players-split');
     const s = document.getElementById('player-trend');
-    if (!state.player || !s) return;
-    const r = s.getBoundingClientRect();
-    if (r.top > innerHeight - 120 || r.bottom < 160) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+    if (!state.player || !s || !split) return;
+    // Side by side (wide screens) the chart is already next to the row; stacked (phones) bring it into view.
+    if (getComputedStyle(split).display !== 'grid') {
+      const r = s.getBoundingClientRect();
+      if (r.top > innerHeight - 120 || r.bottom < 160) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+    }
   }
   function syncPlayerPanel() {
     const has = !!currentPlayer();
@@ -688,6 +698,7 @@
     const W = 'team=' + encodeURIComponent(p.team) + '&player_id=' + encodeURIComponent(p.player_id);
     const players = teamPlayers().filter((q) => q.gp >= 6);
     const medianSpread = d3.median(players, (q) => q.spread);
+    const peers = team() ? 'the team' : (group() ? 'the ' + scopeName() : 'the league');
     const parts = [];
     if (p.rating != null) {
       parts.push(p.name + "'s rating is ", mark('b', 'season', 'rating', W, fmt0(p.rating)));
@@ -703,7 +714,7 @@
         mark('span', 'season', 'delta', W, sign(p.delta)), '). ');
       if (medianSpread != null) {
         parts.push('Game-to-game spread is ', mark('span', 'season', 'spread', W, fmt0(p.spread)),
-          p.spread > medianSpread * 1.15 ? ', streakier than most of the team.' : (p.spread < medianSpread * 0.85 ? ', steadier than most of the team.' : ', typical for the team.'));
+          p.spread > medianSpread * 1.15 ? ', streakier than most of ' + peers + '.' : (p.spread < medianSpread * 0.85 ? ', steadier than most of ' + peers + '.' : ', typical for ' + peers + '.'));
       }
     } else {
       parts.push('Too few games yet to call a trend.');
@@ -727,14 +738,19 @@
     const sum = (f) => d3.sum(rows, (r) => +r[f] || 0);
     const secs = d3.sum(rows, (r) => { const [m, s_] = String(r.toi).split(':'); return +m * 60 + +s_; });
     const toi = (sec) => Math.floor(sec / 60) + ':' + String(Math.round(sec % 60)).padStart(2, '0');
-    const tiles = [['Rating', p.rating != null ? fmt0(p.rating) : '—'], ['Avg game', fmt0(p.avg)], ['GP', String(rows.length)]];
+    // Always full rows of six: skaters get two rows, goalies one.
+    let tiles;
     if (p.pos === 'G') {
       const sa = sum('SA'), sv = sum('SV'), ga = sum('GA'), xga = sum('xGA');
-      tiles.push(['Save %', sa ? d3.format('.3f')(sv / sa).replace(/^0/, '') : '—'], ['GA', String(ga)], ['Saved above exp.', (xga - ga > 0 ? '+' : '') + fmt1(xga - ga)], ['TOI / GP', toi(secs / rows.length)]);
+      tiles = [['Rating', p.rating != null ? fmt0(p.rating) : '—'], ['Avg game', fmt0(p.avg)], ['GP', String(rows.length)],
+        ['Save %', sa ? d3.format('.3f')(sv / sa).replace(/^0/, '') : '—'], ['GA / expected', ga + ' / ' + fmt1(xga)],
+        ['Saved above exp.', (xga - ga > 0 ? '+' : '') + fmt1(xga - ga)]];
     } else {
-      const g = sum('G'), a = sum('A1') + sum('A2');
-      tiles.push(['G', String(g)], ['A', String(a)], ['PTS', String(g + a)], ['SOG', String(sum('SOG'))], ['xG', fmt1(sum('ixG'))],
-        ['+/−', (sum('PM') > 0 ? '+' : '') + sum('PM')], ['TOI / GP', toi(secs / rows.length)], ['Play-driving', p.drive != null ? fmt0(p.drive) : '—']);
+      const g = sum('G'), a = sum('A1') + sum('A2'), sog = sum('SOG'), pm = sum('PM');
+      tiles = [['Rating', p.rating != null ? fmt0(p.rating) : '—'], ['Avg game', fmt0(p.avg)], ['Drive', p.drive != null ? fmt0(p.drive) : '—'],
+        ['GP', String(rows.length)], ['TOI / GP', toi(secs / rows.length)], ['+/−', (pm > 0 ? '+' : '') + pm],
+        ['G', String(g)], ['A', String(a)], ['PTS', String(g + a)], ['SOG', String(sog)], ['xG', fmt1(sum('ixG'))],
+        ['Sh %', sog ? fmt1(g / sog * 100) : '—']];
     }
     for (const [k, v] of tiles) {
       const t = document.createElement('div'); t.className = 'pt-stat';
@@ -814,8 +830,8 @@
         td(sign(p.delta), p.delta > 0 ? 'pos' : 'neg');
         const games = (recent.get(p.team + ',' + p.player_id) || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-10).map((g) => g.rating);
         const sp = document.createElement('td'); sp.className = 'l'; sp.appendChild(sparkline(games)); tr.appendChild(sp);
-        tr.addEventListener('click', () => openPlayer(p.player_id));
-        tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id); } });
+        tr.addEventListener('click', () => openPlayer(p.player_id, tr));
+        tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id, tr); } });
         tb.appendChild(tr);
       }
     }

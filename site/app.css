@@ -331,15 +331,13 @@ details.how a { color: inherit; }
 .pt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pt-head h3 { margin: 0; }
 .pt-close { padding: 4px 10px; font-size: 12px; }
-.pt-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
-.pt-stat { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
-.pt-stat b { font-family: var(--font-display); font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.pt-stat span { font-size: 11px; color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
+.pt-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 560px) { .pt-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.pt-stat { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 10px; padding: 7px 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pt-stat b { font-family: var(--font-display); font-size: 19px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pt-stat span { font-size: 10px; color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 1080px) {
   .players-split.has-player { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: start; }
-  .players-split.has-player #season .hr-scroll { max-height: min(760px, calc(100vh - var(--head-h, 59px) - var(--scope-h, 0px) - 140px)); overflow: auto; }
-  .players-split.has-player #season thead th { position: sticky; top: 0; z-index: 2; background: var(--color-panel); }
-  .players-split.has-player #season .hr-sub, .players-split.has-player #season details.how { display: none; }
   .players-split.has-player #player-trend { position: sticky; top: calc(var(--head-h, 59px) + var(--scope-h, 0px) + 56px); }
   .players-split.has-player #hot { grid-column: 1 / -1; }
   .players-split.has-player .hr-bar i { display: none; }
