@@ -831,16 +831,13 @@
       for (const p of list) {
         const tr = document.createElement('tr');
         tr.dataset.key = p.team + ',' + p.player_id;
-        tr.className = 'pick' + (cur && cur.player_id === p.player_id ? ' on' : '');
-        tr.tabIndex = 0;
+        if (cur && cur.player_id === p.player_id) tr.className = 'on';   // read-only list: players open from the Players table
         const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
         td(league ? p.name + ' (' + p.team + ')' : p.name, 'l'); td(p.pos, 'l'); td(String(p.gp)); td(fmt0(p.avg));
         const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt0(p.last5))); tr.appendChild(l5);
         td(sign(p.delta), p.delta > 0 ? 'pos' : 'neg');
         const games = (recent.get(p.team + ',' + p.player_id) || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-10).map((g) => g.rating);
         const sp = document.createElement('td'); sp.className = 'l'; sp.appendChild(sparkline(games)); tr.appendChild(sp);
-        tr.addEventListener('click', () => openPlayer(p.player_id, tr));
-        tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id, tr); } });
         tb.appendChild(tr);
       }
     }
