@@ -326,14 +326,24 @@ details.how a { color: inherit; }
 .view[hidden] { display: none; }
 .players-split { display: flex; flex-direction: column; gap: var(--cds-gap-xl); min-width: 0; }
 #season tr.on td { background: var(--color-accent-soft); }
+/* No player picked: the table spans the page. Pick one: the table narrows and the player's chart and stats open beside it. */
+.players-split:not(.has-player) #player-trend { display: none; }
+.pt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pt-head h3 { margin: 0; }
+.pt-close { padding: 4px 10px; font-size: 12px; }
+.pt-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.pt-stat { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.pt-stat b { font-family: var(--font-display); font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.pt-stat span { font-size: 11px; color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; }
 @media (min-width: 1080px) {
-  .players-split { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; align-items: start; }
-  .players-split #season .hr-scroll { max-height: min(720px, calc(100vh - var(--head-h, 59px) - var(--scope-h, 0px) - 120px)); overflow: auto; }
-  .players-split #season thead th { position: sticky; top: 0; z-index: 2; background: var(--color-panel); }
-  .players-split #trends { position: sticky; top: calc(var(--head-h, 59px) + var(--scope-h, 0px) + 56px); }
-  .players-split #trends .hr-chart { min-height: 0; }
+  .players-split.has-player { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .players-split.has-player #season .hr-scroll { max-height: min(760px, calc(100vh - var(--head-h, 59px) - var(--scope-h, 0px) - 140px)); overflow: auto; }
+  .players-split.has-player #season thead th { position: sticky; top: 0; z-index: 2; background: var(--color-panel); }
+  .players-split.has-player #season .hr-sub, .players-split.has-player #season details.how { display: none; }
+  .players-split.has-player #player-trend { position: sticky; top: calc(var(--head-h, 59px) + var(--scope-h, 0px) + 56px); }
+  .players-split.has-player #hot { grid-column: 1 / -1; }
+  .players-split.has-player .hr-bar i { display: none; }
 }
-@media (min-width: 1080px) { .players-split .hr-bar i { display: none; } }
 .scope-logos .hr-logo.out { opacity: .4; }
 @media (max-width: 640px) { .hr-season .hr-bar i { display: none; } }
 
@@ -353,3 +363,10 @@ details.how a { color: inherit; }
   .scope-logos .hr-logo img { width: 24px; height: 22px; }
   .scope-now { font-size: 11px; }
 }
+
+.scope-avg { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--color-fg); font-variant-numeric: tabular-nums; }
+.scope-chip[aria-pressed=true] .scope-avg { color: var(--color-fg); }
+.scope-group { grid-template-columns: max-content repeat(8, minmax(0, 1fr)); }
+@media (max-width: 720px) { .scope-group { grid-template-columns: max-content repeat(8, minmax(0, 1fr)); } .scope-avg { margin-left: 4px; padding: 0 3px; } }
+.hr details#method .method-body { columns: 2 340px; column-gap: 40px; margin-top: 10px; }
+.hr details#method .method-body p { max-width: none; margin: 0 0 12px; break-inside: avoid-column; }

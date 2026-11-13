@@ -187,6 +187,7 @@
           top_player: top ? top.name + ' (' + top.team + ')' : '', top_rating: top ? top.rating : null,
         });
       };
+      row('All teams', 'league', standingsRows);
       for (const [conf, rs] of confs) {
         row(conf, 'conference', rs);
         for (const [div, drs] of d3.sort(d3.groups(rs, (r) => r.division), (g) => order.indexOf(g[0]))) row(div, 'division', drs);
@@ -201,16 +202,17 @@
     if (d.status !== 'ok' || !d.data) return;
     for (const r of d.data) {
       const tr = document.createElement('tr');
-      tr.className = 'pick' + (r.kind === 'conference' ? ' conf' : '') + (!team() && group() === r.name ? ' on' : '');
+      const key = r.kind === 'league' ? '' : r.name;
+      tr.className = 'pick' + (r.kind !== 'division' ? ' conf' : '') + (!team() && group() === key ? ' on' : '');
       tr.tabIndex = 0;
       const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
-      td(r.kind === 'conference' ? r.name + ' Conference' : r.name, 'l' + (r.kind === 'division' ? ' ind' : ''));
+      td(r.kind === 'conference' ? r.name + ' Conference' : (r.kind === 'league' ? 'Whole league' : r.name), 'l' + (r.kind === 'division' ? ' ind' : ''));
       td(String(r.teams)); td(r.pts_pct == null ? '—' : fmt1(r.pts_pct));
       const g = document.createElement('td'); g.appendChild(chip(r.avg_game, fmt1(r.avg_game))); tr.appendChild(g);
       const a = document.createElement('td'); a.appendChild(r.avg_rating == null ? document.createTextNode('—') : chip(r.avg_rating, fmt1(r.avg_rating))); tr.appendChild(a);
       td(r.best_team ? r.best_team + ' · ' + fmt1(r.best_team_game) : '—', 'l');
       td(r.top_player ? r.top_player + ' · ' + fmt0(r.top_rating) : '—', 'l');
-      const go = () => pickGroup(r.name);
+      const go = () => pickGroup(key);
       tr.addEventListener('click', go);
       tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
       tb.appendChild(tr);
@@ -451,7 +453,7 @@
             team: r.team, player_id: r.player_id, game_id: r.game_id, date: r.date, opp: r.opp, home: r.home,
             result: r.result, score: r.score, rating: +r.rating, pct: r.pct,
             pos: r.pos, toi: r.toi, G: +r.G || 0, A1: +r.A1 || 0, A2: +r.A2 || 0, SOG: r.SOG,
-            SV: r.SV, SA: r.SA, GA: r.GA, xGA: r.xGA, ixG: r.ixG, xgs: r.xgs, gs: r.gs,
+            SV: r.SV, SA: r.SA, GA: r.GA, xGA: r.xGA, ixG: r.ixG, xgs: r.xgs, gs: r.gs, PM: r.PM,
             form: r.form === '' || r.form == null ? null : +r.form, form_sd: r.form_sd === '' || r.form_sd == null ? null : +r.form_sd,
             roll5: Math.round(d3.mean(window5, (x) => +x.rating) * 100) / 100,
           });
@@ -513,12 +515,19 @@
   function openPlayer(id) {
     state.player = state.player === id ? null : id;      // click the same player again to clear
     markPlayerRows();
+    syncPlayerPanel();
+    dash.draw('playerStats'); dash.draw('playerName');
     ['playerGrid', 'playerText', 'playerChart', 'hotRows'].forEach((n) => dash.draw(n));
     const s = document.getElementById('player-trend');
     if (!state.player || !s) return;
     const r = s.getBoundingClientRect();
     if (r.top > innerHeight - 120 || r.bottom < 160) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
   }
+  function syncPlayerPanel() {
+    const has = !!currentPlayer();
+    document.querySelectorAll('.players-split').forEach((el) => el.classList.toggle('has-player', has));
+  }
+  document.querySelectorAll('#pt-close').forEach((b) => b.addEventListener('click', () => { if (state.player) openPlayer(state.player); }));
   function markPlayerRows() {
     document.querySelectorAll('#season tbody tr').forEach((tr) => tr.classList.toggle('on', !!state.player && tr.dataset.key.split(',')[1] === String(state.player)));
   }
@@ -702,7 +711,41 @@
     el.replaceChildren(...parts);
   });
 
+  dash.draw('playerName', (el) => {
+    const p = currentPlayer();
+    el.textContent = p ? p.name + (team() ? '' : ' · ' + p.team) + ' · ' + p.pos : 'Player';
+  });
+
+  // The picked player's season totals, under the chart.
+  dash.draw('playerStats', (el) => {
+    const p = currentPlayer();
+    const d = dash.data('rolling');
+    el.replaceChildren();
+    if (!p || d.status !== 'ok' || !d.data) return;
+    const rows = groupOf(d.data, 'teamPlayer', (r) => r.team + ',' + r.player_id).get(p.team + ',' + p.player_id) || [];
+    if (!rows.length) return;
+    const sum = (f) => d3.sum(rows, (r) => +r[f] || 0);
+    const secs = d3.sum(rows, (r) => { const [m, s_] = String(r.toi).split(':'); return +m * 60 + +s_; });
+    const toi = (sec) => Math.floor(sec / 60) + ':' + String(Math.round(sec % 60)).padStart(2, '0');
+    const tiles = [['Rating', p.rating != null ? fmt0(p.rating) : '—'], ['Avg game', fmt0(p.avg)], ['GP', String(rows.length)]];
+    if (p.pos === 'G') {
+      const sa = sum('SA'), sv = sum('SV'), ga = sum('GA'), xga = sum('xGA');
+      tiles.push(['Save %', sa ? d3.format('.3f')(sv / sa).replace(/^0/, '') : '—'], ['GA', String(ga)], ['Saved above exp.', (xga - ga > 0 ? '+' : '') + fmt1(xga - ga)], ['TOI / GP', toi(secs / rows.length)]);
+    } else {
+      const g = sum('G'), a = sum('A1') + sum('A2');
+      tiles.push(['G', String(g)], ['A', String(a)], ['PTS', String(g + a)], ['SOG', String(sum('SOG'))], ['xG', fmt1(sum('ixG'))],
+        ['+/−', (sum('PM') > 0 ? '+' : '') + sum('PM')], ['TOI / GP', toi(secs / rows.length)], ['Play-driving', p.drive != null ? fmt0(p.drive) : '—']);
+    }
+    for (const [k, v] of tiles) {
+      const t = document.createElement('div'); t.className = 'pt-stat';
+      const vv = document.createElement('b'); vv.textContent = v;
+      const kk = document.createElement('span'); kk.textContent = k;
+      t.append(vv, kk); el.appendChild(t);
+    }
+  });
+
   dash.draw('playerChart', (el) => {
+    syncPlayerPanel();
     const d = dash.data('rolling');
     if (d.status === 'error') { el.textContent = 'Failed to load'; return; }
     const p = currentPlayer();
@@ -1095,6 +1138,16 @@
   });
 
   // ---------------------------------------------------------------- team bar + overview
+  // Average skater rating of a group ('All teams', a conference or a division), as a small coloured number.
+  function avgBadge(name) {
+    const d = dash.data('groupAvg');
+    const r = d.status === 'ok' && d.data ? d.data.find((x) => x.name === name) : null;
+    if (!r || r.avg_rating == null) return null;
+    const b = document.createElement('span'); b.className = 'scope-avg'; b.textContent = fmt0(r.avg_rating);
+    b.style.background = hrColor(r.avg_rating);
+    b.title = 'Average skater rating ' + fmt1(r.avg_rating) + ' · average game score ' + fmt1(r.avg_game);
+    return b;
+  }
   // The scope bar: whole league, a conference, or (below) a division or a team. Click the picked one again to clear it.
   dash.draw('teamBar', (el) => {
     const rows = standings();
@@ -1103,6 +1156,7 @@
     const chip_ = (label, on, onClick, title) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'scope-chip'; b.textContent = label;
       b.setAttribute('aria-pressed', String(on)); if (title) b.title = title;
+      const avg = avgBadge(label); if (avg) b.append(avg);
       b.addEventListener('click', onClick); chips.appendChild(b); return b;
     };
     chip_('All teams', !team() && !group(), () => pickGroup(''));
@@ -1221,7 +1275,7 @@
     const s = dash.data('standings');
     const rows = standings();
     const dark = darkTheme(el);
-    if (rows && unchanged(el, [rows, logoSet(dark), dark])) { markScope(el); return; }
+    if (rows && unchanged(el, [rows, logoSet(dark), dark, dash.data('groupAvg').data])) { markScope(el); return; }
     el.replaceChildren();
     if (s.status === 'error') { el.textContent = 'Failed to load'; return; }
     if (!rows) { el.textContent = '—'; return; }
@@ -1232,6 +1286,7 @@
       const full = document.createElement('span'); full.className = 'full'; full.textContent = div;
       const short = document.createElement('span'); short.className = 'short'; short.textContent = div === 'Metropolitan' ? 'Metro' : div;
       lab.append(full, short); lab.title = div + ' Division';
+      const avg = avgBadge(div); if (avg) lab.append(avg);
       lab.addEventListener('click', () => pickGroup(div));
       box.appendChild(lab);
       for (const t of d3.sort(divRows, (r) => r.name)) {

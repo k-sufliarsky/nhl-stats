@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="theme.css?v=20261113f">
-<link rel="stylesheet" href="app.css?v=20261113f">
+<link rel="stylesheet" href="theme.css?v=20261113g">
+<link rel="stylesheet" href="app.css?v=20261113g">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js?v=20261113f"></script>
+<script src="runtime.js?v=20261113g"></script>
 </head>
 <body>
 <header class="app-head" id="top">
@@ -120,9 +120,8 @@
       </table>
     </div>
   </section>
-  <section class="hr-sec" id="trends">
-    <div class="hr-trend-grid" id="player-trend">
-      <h3>Player trend</h3>
+    <section class="hr-sec hr-trend-grid" id="player-trend" aria-live="polite">
+      <div class="pt-head"><h3 data-draw="playerName">Player</h3><button type="button" class="btn btn-ghost pt-close" id="pt-close">Close ✕</button></div>
       <p class="hr-lede" data-draw="playerText">—</p>
       <div class="hr-key" aria-hidden="true">
         <span><i class="hr-sw hr-sw-dot"></i>Game score</span>
@@ -131,9 +130,9 @@
         <span><i class="hr-sw hr-sw-ref"></i>League average</span>
       </div>
       <div class="hr-chart" data-source="rolling" data-draw="playerChart"></div>
-    </div>
-
-    <div class="hr-trend-grid" id="hot">
+      <div class="pt-stats" data-source="rolling season" data-draw="playerStats"></div>
+    </section>
+    <section class="hr-sec hr-trend-grid" id="hot">
       <h3>Who's trending</h3>
       <p class="hr-sub">Last five games against the season average (6+ games played).</p>
       <div class="hr-scroll">
@@ -150,8 +149,7 @@
           <tbody data-draw="hotRows"></tbody>
         </table>
       </div>
-    </div>
-  </section>
+    </section>
     </div>
   </div>
 
@@ -345,6 +343,7 @@
 
   <details id="method">
     <summary>How the ratings work</summary>
+    <div class="method-body">
     <p>Two layers: a <strong>game score</strong> says what happened in one game; a <strong>rating</strong> says how good a player is, and is updated after every game. One game is a very noisy sample, and goals are the noisiest part of it, so both lean on shots and expected goals rather than on goals.</p>
     <p><strong>Expected goals (xG)</strong> is the chance that a shot becomes a goal, from a model trained on <span data-draw="methodXg">the two previous NHL seasons</span> and then frozen: shot distance, angle, shot type, rebound, off a turnover, power play, shorthanded, empty net.</p>
     <p><strong>Game score.</strong> Skaters get an <em>xG Game Score</em>: Dom Luszczyszyn's published Game Score (0.75 × goals + 0.70 × primary assists + 0.55 × secondary assists + 0.075 × shots on goal + 0.05 × blocks + 0.15 × penalties drawn − 0.15 × taken + 0.01 × faceoffs won − 0.01 × lost + 0.05 × 5-on-5 shot attempts for on ice − 0.05 × against + 0.15 × 5-on-5 goals for on ice − 0.15 × against), with goals replaced by the player's own expected goals and the on-ice shot-attempt and goal terms replaced by on-ice 5-on-5 expected goals for and against. Goalies get goals saved above expected. Each game's number is ranked against every game this season at the position (forwards, defense, goalies) and the rank placed on a 0–100 bell curve centred on 50: 70 beats 91% of games, 80 beats 98%, 90 beats 99.6%.</p>
@@ -353,6 +352,7 @@
     <p><strong>Limits:</strong> these numbers only see what the play-by-play and shift charts record. Defensive positioning, zone exits and passes that don't lead to a shot are invisible, and on-ice numbers depend on teammates. Treat a single game as a summary, not a verdict.</p>
     <p><strong>Sources:</strong> Game Score — Luszczyszyn, Hockey Graphs (2016). Why shots and xG beat goals in small samples — Macdonald, Lennon &amp; Sturdivant (2012). Rating updates — state-space models as in Glickman &amp; Stern (1998) and Lopez, Matthews &amp; Baumer (2018), applied here to players.</p>
     <p><strong>Data and video:</strong> statistics, standings and team logos come from the NHL's public web API (boxscores, play-by-play and shift charts), documented by the community project NHL-API-Reference. Highlight links open NHL.com or YouTube, which host the videos; nothing is copied here. This page is an independent fan project and is not affiliated with or endorsed by the NHL or its teams. NHL and team names and logos are trademarks of the NHL and its teams.</p>
+    </div>
   </details>
   </div>
 </div>
@@ -363,6 +363,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js?v=20261113f"></script>
+<script src="app.js?v=20261113g"></script>
 </body>
 </html>
