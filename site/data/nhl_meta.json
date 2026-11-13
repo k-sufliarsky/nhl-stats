@@ -3,7 +3,7 @@
  "playoffs": false,
  "games": 309,
  "generated": "2026-11-13",
- "generated_at": "2026-11-13T17:10:57Z",
+ "generated_at": "2026-11-13T17:51:05Z",
  "last_game_day": "2026-11-12",
  "reference": {
   "F": {
@@ -37,7 +37,7 @@
  },
  "xg_onice_weight": 1.3008,
  "xg": {
-  "shots": 25855,
+  "shots": 25856,
   "frozen": true,
   "trained_on": [
    "20242025",
