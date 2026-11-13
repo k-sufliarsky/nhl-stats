@@ -1229,7 +1229,9 @@
     for (const [div, divRows] of d3.sort(d3.groups(rows, (r) => r.division), (g) => order(g[0]))) {
       const box = document.createElement('div'); box.className = 'scope-group';
       const lab = document.createElement('button'); lab.type = 'button'; lab.className = 'scope-chip scope-div'; lab.dataset.group = div;
-      lab.textContent = div; lab.title = div + ' Division';
+      const full = document.createElement('span'); full.className = 'full'; full.textContent = div;
+      const short = document.createElement('span'); short.className = 'short'; short.textContent = div === 'Metropolitan' ? 'Metro' : div;
+      lab.append(full, short); lab.title = div + ' Division';
       lab.addEventListener('click', () => pickGroup(div));
       box.appendChild(lab);
       for (const t of d3.sort(divRows, (r) => r.name)) {

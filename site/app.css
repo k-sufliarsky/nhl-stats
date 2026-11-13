@@ -336,3 +336,20 @@ details.how a { color: inherit; }
 @media (min-width: 1080px) { .players-split .hr-bar i { display: none; } }
 .scope-logos .hr-logo.out { opacity: .4; }
 @media (max-width: 640px) { .hr-season .hr-bar i { display: none; } }
+
+/* Divisions: 2 x 2 on laptops, one column of four on phones */
+.scope-logos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; overflow: visible; flex-wrap: initial; }
+.scope-group { display: grid; grid-template-columns: 104px repeat(8, minmax(0, 1fr)); align-items: center; gap: 2px; }
+.scope-group .scope-div { margin-right: 6px; text-align: center; }
+.scope-div .short { display: none; }
+.scope-logos .hr-logo { width: auto; justify-self: center; }
+@media (max-width: 720px) {
+  .scope-logos { grid-template-columns: minmax(0, 1fr); gap: 2px; overflow: visible; }
+  .scope-group { grid-template-columns: 64px repeat(8, minmax(0, 1fr)); }
+  .scope-group .scope-div { padding: 3px 6px; font-size: 11px; margin-right: 4px; }
+  .scope-div .full { display: none; }
+  .scope-div .short { display: inline; }
+  .scope-logos .hr-logo { width: 100%; max-width: 36px; height: 28px; padding: 1px; }
+  .scope-logos .hr-logo img { width: 24px; height: 22px; }
+  .scope-now { font-size: 11px; }
+}
