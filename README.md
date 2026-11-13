@@ -37,7 +37,7 @@ API responses are cached in `cache/` (not committed), so re-runs only download n
 
 ## Automatic updates
 
-`.github/workflows/update.yml` runs every 30 minutes between 02:00 and 13:30 UTC (9 PM to 8:30 AM US Eastern). Each run does a quick check with `should_update.py`. The full update runs only when:
+`.github/workflows/update.yml` runs a quick check with `should_update.py` twice an hour overnight (US Eastern) and hourly the rest of the day, at :23 and :53. GitHub's scheduler is best-effort and often skips runs at :00 and :30; the daytime checks catch up any night it missed. Pushes to `main` run the check too. The full update runs only when:
 
 1. every game of the latest game day (US Eastern date) is final,
 2. at least `HOURS_AFTER_LAST_START` hours (default **3**) have passed since that day's last game started, and

@@ -1,12 +1,15 @@
 name: Update data and publish site
 
-# Every 30 minutes from 02:00 to 13:30 UTC (9 PM to 8:30 AM US Eastern), a quick check asks:
-# has the last game day finished, and has it been HOURS_AFTER_LAST_START hours since its last game started?
-# Only then does the full update run: recompute ratings, commit the new data, publish the site.
-# Pushes to main that change the site or the scripts publish too.
+# A quick check runs often and asks: has the last game day finished, has it been HOURS_AFTER_LAST_START hours
+# since its last game started, and is it not processed yet? Only then does the full update run: recompute ratings,
+# commit the new data, publish the site.
+# GitHub's scheduler is best-effort and often skips runs at :00 and :30, so the checks run at odd minutes:
+# twice an hour overnight (US Eastern), and hourly the rest of the day so a skipped night is caught up next morning.
+# Pushes to main also run the check (and always republish the site).
 on:
   schedule:
-    - cron: "*/30 2-13 * * *"
+    - cron: "23,53 3-12 * * *"
+    - cron: "23 0-2,13-23 * * *"
   workflow_dispatch:
     inputs:
       force:
@@ -44,7 +47,6 @@ jobs:
 
       - name: Is there a finished game day to process?
         id: check
-        if: github.event_name != 'push'
         env:
           FORCE: ${{ github.event.inputs.force || 'false' }}
         run: python should_update.py
