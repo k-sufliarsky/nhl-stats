@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="theme.css?v=20261113j">
-<link rel="stylesheet" href="app.css?v=20261113j">
+<link rel="stylesheet" href="theme.css?v=20261113k">
+<link rel="stylesheet" href="app.css?v=20261113k">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js?v=20261113j"></script>
+<script src="runtime.js?v=20261113k"></script>
 </head>
 <body>
 <header class="app-head" id="top">
@@ -99,6 +99,7 @@
           <li><b>Game score</b> — each game's <i>xG Game Score</i>: shots, scoring chances (expected goals), assists, blocks, penalties, faceoffs, and the 5-on-5 chances for and against while on the ice. It's ranked against every game at the position: 50 is average, 70 beats 91% of games, 90 beats 99.6%.</li>
           <li><b>Rating</b> — starts from last season and moves a little toward each new game score, so one big night can't make a star. 50 is the average player, 70 about the top 2%.</li>
           <li><b>Goalies</b> — goals saved above expected: the chance quality of every shot faced minus goals allowed.</li>
+          <li><b>vs Exp.</b> — average game score minus the score expected before each game from the player's rating, ice time, both teams' strength, home ice and back-to-backs. Positive means outperforming; single games swing about ±11, so trust it after 15–20 games.</li>
           <li><b>Play-driving</b> — the team's 5-on-5 expected-goal edge per 60 minutes with the player on the ice, as a running rating; short nights count less.</li>
         </ul>
         <a href="#method">Full method</a>
@@ -114,6 +115,7 @@
           <th data-field="rating" title="Running estimate after the latest game, started from last season">Rating</th>
           <th data-field="since_start" title="Change since the start of the season">± Season</th>
           <th data-field="avg" title="Average game score this season">Avg game</th>
+          <th data-field="vs_exp" title="Average game score minus what was expected before each game from his rating, ice time, both teams' strength, home ice and back-to-backs">vs Exp.</th>
           <th data-field="last5" title="Average game score, last five games">Last 5</th>
           <th data-field="drive" title="5-on-5 expected-goal edge with the player on the ice, as a running rating">Play-driving</th>
         </tr></thead>
@@ -367,6 +369,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js?v=20261113j"></script>
+<script src="app.js?v=20261113k"></script>
 </body>
 </html>

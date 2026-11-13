@@ -770,6 +770,8 @@ def main():
                 col = "drive" if which == "drive" else "form"
                 row[col] = round(M.to_hundred(m, mu, sd), 1)
                 row[col + "_sd"] = round(M.RATING_SPREAD * math.sqrt(v) / sd, 1)
+                if which == "form":
+                    row["form_pre"] = round(M.to_hundred(pre[0], mu, sd), 2)
                 if which == "drive":
                     row["drive_xgd"] = round(m, 3)
                 if which == "goalie":
@@ -777,23 +779,17 @@ def main():
 
     # --- 0-100: rank every player-game within its position group, then place the rank on a bell curve.
     # (A straight z-score sent ~1 in 60 forward games to 10, because Game Score has a long right tail.)
-    from statistics import NormalDist
-    bell = NormalDist()
-    ref = {}
-    for grp in "FDG":
-        group = sorted((r for r in rows if r["group"] == grp), key=lambda r: r["raw"])
-        n = len(group)
-        ref[grp] = dict(games=n, median_raw=group[n // 2]["raw"] if n else None)
-        i = 0
-        while i < n:                                   # equal raw scores share their average rank
-            j = i
-            while j + 1 < n and group[j + 1]["raw"] == group[i]["raw"]:
-                j += 1
-            pct = ((i + j) / 2 + 0.5) / n
-            for r in group[i:j + 1]:
-                r["pct"] = round(pct * 100, 1)
-                r["rating"] = int(round(min(100.0, max(0.0, 50 + SPREAD * bell.inv_cdf(pct)))))
-            i = j + 1
+    ref = M.rank_scores(rows, SPREAD)
+
+    # --- expected game score from what was known before each game (rating, ice time, opponents, home ice, rest)
+    if model and model.get("expected"):
+        e = model["expected"]
+        games_xg = [(gid, boxes[gid]["gameDate"], boxes[gid]["homeTeam"]["abbrev"], boxes[gid]["awayTeam"]["abbrev"],
+                     *M.team_xg(parsed[gid]["shots"], parsed[gid]["home"])) for gid in all_ids]
+        M.expected_features(rows, games_xg, e["league_xg"])
+        for r in rows:
+            if "xf" in r:
+                r["exp"] = round(M.expected_score(r.pop("xf"), e["coef"]), 1)
 
     # --- game context for every row, from each player's own team's point of view
     by_game = defaultdict(list)
@@ -809,7 +805,7 @@ def main():
             r.update(opp=opp["abbrev"], home=is_home, score=f'{me["score"]}-{opp["score"]}',
                      result=res + ("" if last == "REG" else f" ({last})"))
     os.makedirs(a.out, exist_ok=True)
-    keys = ["date", "team", "opp", "home", "score", "result", "name", "pos", "toi", "rating", "pct", "raw", "gs", "xgs",
+    keys = ["date", "team", "opp", "home", "score", "result", "name", "pos", "toi", "rating", "pct", "exp", "raw", "gs", "xgs",
             "form", "form_sd", "drive", "drive_sd", "drive_xgd", "gsax100",
             "G", "A1", "A2", "PTS", "SOG", "ixG", "BLK", "PD", "PT", "FOW", "FOL", "CF", "CA", "GF", "GA", "PM",
             "HIT", "TK", "GV", "toi5", "xGF5", "xGA5", "SA", "SV", "FA", "xGA", "svpct", "decision", "game_id", "player_id"]
@@ -838,7 +834,8 @@ def main():
                         coef=dict(zip(xg_model["names"], xg_model["coef"]))),
                 model=dict(built=model["built"], filters={w: {k_: f[k_] for k_ in ("params", "mu", "sd", "check") if k_ in f}
                                                          for w, f in model["filters"].items()},
-                           checks=model["checks"], xg_check=model["xg"].get("check"), rapm_penalty=model["rapm"]["penalty"])
+                           checks=model["checks"], xg_check=model["xg"].get("check"), rapm_penalty=model["rapm"]["penalty"],
+                           expected=model.get("expected"))
                 if model else None)
     with open(os.path.join(a.out, "nhl_meta.json"), "w") as f:
         json.dump(meta, f, indent=1)

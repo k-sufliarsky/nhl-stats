@@ -3,7 +3,7 @@
  "playoffs": false,
  "games": 309,
  "generated": "2026-11-13",
- "generated_at": "2026-11-13T13:57:58Z",
+ "generated_at": "2026-11-13T17:10:57Z",
  "last_game_day": "2026-11-12",
  "reference": {
   "F": {
@@ -176,6 +176,59 @@
    "auc": 0.75,
    "log_loss": 0.2369
   },
-  "rapm_penalty": 10
+  "rapm_penalty": 10,
+  "expected": {
+   "features": [
+    "rating before the game",
+    "average TOI so far (min)",
+    "defenceman",
+    "home",
+    "own team xGF per game",
+    "own team xGA per game",
+    "opponent xGF per game",
+    "opponent xGA per game",
+    "own back-to-back",
+    "opponent back-to-back"
+   ],
+   "coef": [
+    21.59197,
+    0.40349,
+    0.43424,
+    -1.78354,
+    1.4108,
+    1.15218,
+    -1.94025,
+    -5.55599,
+    6.54928,
+    -1.67463,
+    1.61095
+   ],
+   "se": [
+    1.27922,
+    0.00851,
+    0.02594,
+    0.14209,
+    0.09418,
+    0.26218,
+    0.26106,
+    0.24273,
+    0.24884,
+    0.13028,
+    0.13028
+   ],
+   "league_xg": 2.8505,
+   "train_fit": {
+    "games": 94454,
+    "mae": 11.2,
+    "mae_always_50": 11.96,
+    "r2": 0.1118
+   },
+   "check": {
+    "games": 11123,
+    "mae": 11.07,
+    "mae_always_50": 11.97,
+    "r2": 0.141
+   }
+  }
  }
 }

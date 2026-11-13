@@ -86,10 +86,43 @@ def next_game(rows, predictor, target, group="FD", window=10):
     return round(corr(xs, ys), 3)
 
 
+def fit_expected(games, rows, train, check, f):
+    """Least-squares fit of the per-game 0-100 score on pre-game features (rating_model.EXPECTED_FEATURES), on the
+    training seasons; scored on the check season. games/rows: season -> parsed games / player rows. f: the form filter."""
+    seasons = list(train) + ([check] if check in rows else [])
+    _, _, _, res = M.run_filter(M.observations([r for s in seasons for r in rows[s]], "form"), f["params"], f["mu"], collect=True)
+    for row, pre, post, y, sc in res:
+        row["form_pre"] = M.to_hundred(pre[0], f["mu"][row["group"]], f["sd"][row["group"]])
+    tr_games = [(gid, box["gameDate"], box["homeTeam"]["abbrev"], box["awayTeam"]["abbrev"], *M.team_xg(P["shots"], P["home"]))
+                for s in train for gid, box, P in games[s]]
+    league_xg = float(np.mean([g[4] for g in tr_games] + [g[5] for g in tr_games]))
+    for s in seasons:
+        M.rank_scores(rows[s], N.SPREAD)
+        M.expected_features(rows[s], [(gid, box["gameDate"], box["homeTeam"]["abbrev"], box["awayTeam"]["abbrev"],
+                                       *M.team_xg(P["shots"], P["home"])) for gid, box, P in games[s]], league_xg)
+    def xy(ss):
+        rr = [r for s in ss for r in rows[s] if "xf" in r]
+        return np.array([[1.0] + r["xf"] for r in rr]), np.array([float(r["rating"]) for r in rr])
+    X, y = xy(train)
+    b = np.linalg.lstsq(X, y, rcond=None)[0]
+    e = y - X @ b
+    se = np.sqrt(np.diag(e @ e / (len(y) - X.shape[1]) * np.linalg.inv(X.T @ X)))
+    def score(X_, y_):
+        p_ = np.clip(X_ @ b, 0, 100)
+        return dict(games=len(y_), mae=round(float(np.mean(np.abs(y_ - p_))), 2), mae_always_50=round(float(np.mean(np.abs(y_ - 50))), 2),
+                    r2=round(float(1 - np.var(y_ - p_) / np.var(y_)), 4))
+    out = dict(features=M.EXPECTED_FEATURES, coef=[round(float(v), 5) for v in b], se=[round(float(v), 5) for v in se],
+               league_xg=round(league_xg, 4), train_fit=score(X, y))
+    if check in rows:
+        out["check"] = score(*xy([check]))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--train", nargs="+", default=["20242025", "20252026"])
     ap.add_argument("--check", default="20262027", help="season used only to check the model (out of sample)")
+    ap.add_argument("--expected-only", action="store_true", help="only (re)fit the expected game score; keep the rest of model.json")
     a = ap.parse_args()
     t0 = time.time()
     train = {s: season_games(s) for s in a.train}
@@ -112,6 +145,21 @@ def main():
     xg["check"] = quality(ck_shots) if ck_shots else None
     print("xG", xg["train_fit"], "check", xg["check"], file=sys.stderr)
 
+    if a.expected_only:
+        model = M.load()
+        k = model["xg_onice_weight"]
+        for g in list(train.values()) + [check]:
+            for _, _, P in g:
+                M.apply_xg(P["shots"], model["xg"])
+        rows = {s: rows_for(g, k, s) for s, g in train.items()}
+        games = dict(train)
+        if check:
+            rows[a.check] = rows_for(check, k, a.check); games[a.check] = check
+        model["expected"] = fit_expected(games, rows, a.train, a.check, model["filters"]["form"])
+        print(json.dumps(model["expected"], indent=1), file=sys.stderr)
+        with open(os.path.join(M.MODEL_DIR, "model.json"), "w") as f:
+            json.dump(model, f, indent=1)
+        return
     k = M.xg_onice_weight([P for g in train.values() for _, _, P in g])
     print(f"on-ice xG weight {k:.3f}", file=sys.stderr)
     rows = {s: rows_for(g, k, s) for s, g in train.items()}
@@ -187,8 +235,12 @@ def main():
         prior = {p: (v[0], v[1]) for p, v in fit.items()}
     rapm_out = {str(p): [round(v[0], 4), round(v[1], 4)] for p, v in prior.items()}
 
+    games = dict(train)
+    if check:
+        rows[a.check] = ck_rows; games[a.check] = check
+    expected = fit_expected(games, rows, a.train, a.check, filters["form"])
     os.makedirs(M.MODEL_DIR, exist_ok=True)
-    model = dict(built=time.strftime("%Y-%m-%d"), trained_on=a.train, checked_on=a.check, xg=xg,
+    model = dict(expected=expected, built=time.strftime("%Y-%m-%d"), trained_on=a.train, checked_on=a.check, xg=xg,
                  xg_onice_weight=round(k, 4), filters=filters, trade_games=M.TRADE_GAMES,
                  rapm=dict(penalty=lam, cv_error=errs), checks=checks)
     with open(os.path.join(M.MODEL_DIR, "model.json"), "w") as f:

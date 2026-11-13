@@ -37,6 +37,8 @@ each game:    v = v + q_game · (team games since the player's last game)   (+5 
 
 **Teammate-adjusted impact.** A ridge regression (RAPM) of 5-on-5 xG per 60 on the ten skaters on the ice, shrunk toward last season's result, gives each skater's own offensive and defensive effect (`nhl_players.csv`: `adj_off`, `adj_def`, `adj_net`). The penalty is chosen by odd/even-game cross-validation.
 
+**Expected game score and "vs Exp.".** Before each game, a least-squares fit on past seasons predicts each skater's 0-100 game score from his rating before the game, his average ice time so far, position, home ice, both teams' expected goals for and against per game so far (shrunk toward the league average), and whether either team is on a back-to-back. "vs Exp." is his average game score minus that expectation: positive means he is outperforming. Division, conference, repeat meetings and the opposing goalie were tested and added nothing. Single games swing by about ±11 points around the expectation (it explains about 14% of game-to-game variation on the 2026-27 check), so the average means something only after 15-20 games. Refit with `python3 build_model.py --expected-only`.
+
 **Checks.** `build_model.py` reports, and the site's method notes show: odd/even split-half reliability of each per-game number, the xG model's AUC on unseen shots, and whether the rating before a game predicts that game better than the season-to-date average. No published study shows that any per-game hockey score predicts the next game well; expect low game-to-game correlations.
 
 - **Lines** are the three forwards and two defensemen who spent the most 5-on-5 time together in a game, from the NHL's shift charts.

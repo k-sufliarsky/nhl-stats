@@ -273,6 +273,83 @@ def rapm_error(train, test, lam, prior=None):
     return err / wsum
 
 
+# ----------------------------------------------------------------------------- per-game 0-100 score and expected score
+def rank_scores(rows, spread):
+    """The per-game 0-100 score: rank every player-game within its position group (F, D, G) by raw score and place the
+    rank on a bell curve, 50 + spread * normal quantile. Sets row["pct"] and row["rating"]; returns reference info."""
+    from statistics import NormalDist
+    bell = NormalDist()
+    ref = {}
+    for grp in "FDG":
+        group = sorted((r for r in rows if r["group"] == grp), key=lambda r: r["raw"])
+        n = len(group)
+        ref[grp] = dict(games=n, median_raw=group[n // 2]["raw"] if n else None)
+        i = 0
+        while i < n:                                   # equal raw scores share their average rank
+            j = i
+            while j + 1 < n and group[j + 1]["raw"] == group[i]["raw"]:
+                j += 1
+            pct = ((i + j) / 2 + 0.5) / n
+            for r in group[i:j + 1]:
+                r["pct"] = round(pct * 100, 1)
+                r["rating"] = int(round(min(100.0, max(0.0, 50 + spread * bell.inv_cdf(pct)))))
+            i = j + 1
+    return ref
+
+
+# What a skater's game score "should" be, from what was known before the game. Fitted by least squares on past seasons
+# (build_model.py); division, conference, repeat meetings and the opposing goalie were tested and added nothing.
+EXPECTED_FEATURES = ["rating before the game", "average TOI so far (min)", "defenceman", "home",
+                     "own team xGF per game", "own team xGA per game", "opponent xGF per game", "opponent xGA per game",
+                     "own back-to-back", "opponent back-to-back"]
+TEAM_PRIOR_GAMES = 10    # team xG rates start at the league average, worth this many games
+TOI_PRIOR_GAMES = 5      # ice time starts at the position average (17.5 min F, 21 min D), worth this many games
+
+
+def team_xg(shots, home_id):
+    """(home xG, away xG) of one game's unblocked shots, empty-net shots left out."""
+    h = sum(s["xg"] for s in shots if not s["en"] and s["team"] == home_id)
+    return h, sum(s["xg"] for s in shots if not s["en"]) - h
+
+
+def expected_features(rows, games, league_xg):
+    """Pre-game features for every skater row of one season, stored in row["xf"]. games: (game_id, date, home team,
+    away team, home xG, away xG) for every game of the season; rows need "form_pre" (0-100 rating before the game)."""
+    import datetime as dt
+    team = defaultdict(lambda: [0, 0.0, 0.0, None])      # games, xGF, xGA, date of last game
+    ctx = {}
+    n0 = TEAM_PRIOR_GAMES
+    for gid, date, h, a, xh, xa in sorted(games, key=lambda g: (g[1], g[0])):
+        d = dt.date.fromisoformat(date)
+        for t in (h, a):
+            gp, f, ag, last = team[t]
+            ctx[(gid, t)] = ((f + n0 * league_xg) / (gp + n0), (ag + n0 * league_xg) / (gp + n0),
+                             float(last is not None and (d - last).days == 1), t == h, a if t == h else h)
+        for t, f, ag in ((h, xh, xa), (a, xa, xh)):
+            x = team[t]; x[0] += 1; x[1] += f; x[2] += ag; x[3] = d
+    usage = defaultdict(lambda: [0, 0.0])
+    for r in sorted(rows, key=lambda r: (r["date"], r["game_id"])):
+        if r["group"] == "G" or (r["game_id"], r["team"]) not in ctx:
+            continue
+        own = ctx[(r["game_id"], r["team"])]
+        opp = ctx[(r["game_id"], own[4])]
+        u = usage[r["player_id"]]
+        base = 17.5 if r["group"] == "F" else 21.0
+        if r.get("form_pre") is not None:
+            r["xf"] = [float(r["form_pre"]), (u[1] + TOI_PRIOR_GAMES * base) / (u[0] + TOI_PRIOR_GAMES),
+                       float(r["group"] == "D"), float(own[3]), own[0], own[1], opp[0], opp[1], own[2], opp[2]]
+        u[0] += 1; u[1] += secs_of(r["toi"]) / 60
+
+
+def secs_of(mmss):
+    m, s = str(mmss).split(":")
+    return int(m) * 60 + int(s)
+
+
+def expected_score(xf, coef):
+    return min(100.0, max(0.0, coef[0] + sum(c * x for c, x in zip(coef[1:], xf))))
+
+
 # ----------------------------------------------------------------------------- saved model
 def load():
     path = os.path.join(MODEL_DIR, "model.json")

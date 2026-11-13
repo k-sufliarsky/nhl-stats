@@ -138,7 +138,7 @@
       for (const r of ratings) {
         const key = r.team + ',' + r.player_id;
         if (!byPlayer.has(key)) byPlayer.set(key, { team: r.team, player_id: r.player_id, name: r.name, pos: r.pos, games: [] });
-        byPlayer.get(key).games.push({ date: r.date + r.game_id, rating: +r.rating, form: r.form, form_sd: r.form_sd, drive: r.drive });
+        byPlayer.get(key).games.push({ date: r.date + r.game_id, rating: +r.rating, exp: r.exp === '' || r.exp == null ? null : +r.exp, form: r.form, form_sd: r.form_sd, drive: r.drive });
         byPlayer.get(key).pos = r.pos;
       }
       const num = (v) => (v === '' || v == null ? null : +v);
@@ -149,7 +149,9 @@
         const last = p.games[p.games.length - 1];
         const info = startOf.get(p.player_id) || {};
         const now = num(last.form), start = num(info.form_start);
+        const withExp = p.games.filter((g) => g.exp != null);
         return {
+          vs_exp: withExp.length ? Math.round(mean(withExp.map((g) => g.rating - g.exp)) * 10) / 10 : null,
           rating: now, rating_sd: num(last.form_sd), start, since_start: now != null && start != null ? Math.round((now - start) * 10) / 10 : null,
           drive: num(last.drive), adj_net: num(info.adj_net),
           team: p.team, player_id: p.player_id, name: p.name, pos: p.pos, gp: ratingsInOrder.length,
@@ -304,6 +306,7 @@
       if (p.rating_sd != null) cell.title = 'Likely range ' + fmt0(Math.max(0, rt - p.rating_sd)) + '–' + fmt0(Math.min(100, rt + p.rating_sd));
       if (p.since_start == null) td('—'); else td((p.since_start > 0 ? '+' : '') + fmt1(p.since_start), p.since_start >= 1 ? 'pos' : (p.since_start <= -1 ? 'neg' : ''));
       const avg = document.createElement('td'); avg.appendChild(chip(p.avg, fmt0(p.avg))); tr.appendChild(avg);
+      if (p.vs_exp == null) td('—'); else td((p.vs_exp > 0 ? '+' : '') + fmt1(p.vs_exp), p.vs_exp >= 3 ? 'pos' : (p.vs_exp <= -3 ? 'neg' : ''));
       const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt0(p.last5))); tr.appendChild(l5);
       if (p.drive == null) td('—'); else { const d = document.createElement('td'); d.appendChild(rchip(p.drive)); tr.appendChild(d); }
       tr.className = 'pick' + (state.player === p.player_id ? ' on' : ''); tr.tabIndex = 0;
@@ -451,7 +454,7 @@
           const window5 = games.slice(Math.max(0, i - 4), i + 1);
           out.push({
             team: r.team, player_id: r.player_id, game_id: r.game_id, date: r.date, opp: r.opp, home: r.home,
-            result: r.result, score: r.score, rating: +r.rating, pct: r.pct,
+            result: r.result, score: r.score, rating: +r.rating, pct: r.pct, exp: r.exp === '' || r.exp == null ? null : +r.exp,
             pos: r.pos, toi: r.toi, G: +r.G || 0, A1: +r.A1 || 0, A2: +r.A2 || 0, SOG: r.SOG,
             SV: r.SV, SA: r.SA, GA: r.GA, xGA: r.xGA, ixG: r.ixG, xgs: r.xgs, gs: r.gs, PM: r.PM,
             form: r.form === '' || r.form == null ? null : +r.form, form_sd: r.form_sd === '' || r.form_sd == null ? null : +r.form_sd,
@@ -756,10 +759,10 @@
         ['Saved above exp.', (xga - ga > 0 ? '+' : '') + fmt1(xga - ga)]];
     } else {
       const g = sum('G'), a = sum('A1') + sum('A2'), sog = sum('SOG'), pm = sum('PM');
-      tiles = [['Rating', p.rating != null ? fmt0(p.rating) : '—'], ['Avg game', fmt0(p.avg)], ['Drive', p.drive != null ? fmt0(p.drive) : '—'],
-        ['GP', String(rows.length)], ['TOI / GP', toi(secs / rows.length)], ['+/−', (pm > 0 ? '+' : '') + pm],
-        ['G', String(g)], ['A', String(a)], ['PTS', String(g + a)], ['SOG', String(sog)], ['xG', fmt1(sum('ixG'))],
-        ['Sh %', sog ? fmt1(g / sog * 100) : '—']];
+      tiles = [['Rating', p.rating != null ? fmt0(p.rating) : '—'], ['Avg game', fmt0(p.avg)],
+        ['vs expected', p.vs_exp != null ? (p.vs_exp > 0 ? '+' : '') + fmt1(p.vs_exp) : '—'], ['Drive', p.drive != null ? fmt0(p.drive) : '—'],
+        ['GP', String(rows.length)], ['TOI / GP', toi(secs / rows.length)],
+        ['G', String(g)], ['A', String(a)], ['PTS', String(g + a)], ['+/−', (pm > 0 ? '+' : '') + pm], ['SOG', String(sog)], ['xG', fmt1(sum('ixG'))]];
     }
     for (const [k, v] of tiles) {
       const t = document.createElement('div'); t.className = 'pt-stat';
@@ -794,6 +797,7 @@
       title: (q) => p.name + ' · game score ' + fmt0(q.v),
       lines: (q) => [longDate(q.d) + ', ' + q.r.result + ' ' + q.r.score + (String(q.r.home) === 'True' ? ' vs ' : ' at ') + q.r.opp,
         statLine(q.r), pctLine(q.r),
+        q.r.exp != null ? 'Expected ' + fmt0(q.r.exp) + ' (' + (q.v - q.r.exp >= 0 ? '+' : '') + fmt0(q.v - q.r.exp) + ')' : null,
         q.r.form != null ? 'Rating after this game ' + fmt0(q.r.form) + (q.r.form_sd != null ? ' (likely ' + fmt0(q.lo) + '–' + fmt0(q.hi) + ')' : '') : '5-game average ' + fmt0(q.roll)].filter(Boolean),
     });
   });
