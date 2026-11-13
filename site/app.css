@@ -327,7 +327,8 @@ details.how a { color: inherit; }
 .players-split { display: flex; flex-direction: column; gap: var(--cds-gap-xl); min-width: 0; }
 #season tr.on td { background: var(--color-accent-soft); }
 /* No player picked: the table spans the page. Pick one: the table narrows and the player's chart and stats open beside it. */
-.players-split:not(.has-player) #player-trend { display: none; }
+.psplit { display: flex; flex-direction: column; gap: var(--cds-gap-xl); min-width: 0; }
+.psplit:not(.has-player) #player-trend { display: none; }
 .pt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pt-head h3 { margin: 0; }
 .pt-close { padding: 4px 10px; font-size: 12px; }
@@ -337,10 +338,9 @@ details.how a { color: inherit; }
 .pt-stat b { font-family: var(--font-display); font-size: 19px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pt-stat span { font-size: 10px; color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 1080px) {
-  .players-split.has-player { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: start; }
-  .players-split.has-player #player-trend { position: sticky; top: calc(var(--head-h, 59px) + var(--scope-h, 0px) + 56px); }
-  .players-split.has-player #hot { grid-column: 1 / -1; }
-  .players-split.has-player .hr-bar i { display: none; }
+  .psplit.has-player { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+  .psplit.has-player #player-trend { position: sticky; top: calc(var(--head-h, 59px) + var(--scope-h, 0px) + 56px); }
+  .psplit.has-player .hr-bar i { display: none; }
 }
 .scope-logos .hr-logo.out { opacity: .4; }
 @media (max-width: 640px) { .hr-season .hr-bar i { display: none; } }

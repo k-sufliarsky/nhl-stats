@@ -515,7 +515,11 @@
   // Open (or close) a player's chart. The row that was clicked stays exactly where it was on screen.
   function openPlayer(id, anchor) {
     const before = anchor && anchor.isConnected ? anchor.getBoundingClientRect().top : null;
-    state.player = state.player === id ? null : id;      // click the same player again to clear
+    const from = anchor && anchor.closest ? anchor.closest('.psplit') : null;
+    // Same player clicked again in the same table: close. Same player from the other table: move the panel there.
+    const moving = from && from.id !== panelHome && state.player === id;
+    if (from) panelHome = from.id;
+    state.player = state.player === id && !moving ? null : id;
     markPlayerRows();
     syncPlayerPanel();
     dash.draw('playerStats'); dash.draw('playerName');
@@ -524,7 +528,7 @@
       const shift = anchor.getBoundingClientRect().top - before;
       if (Math.abs(shift) > 1) window.scrollBy(0, shift);
     }
-    const split = document.querySelector('.players-split');
+    const split = document.getElementById(panelHome);
     const s = document.getElementById('player-trend');
     if (!state.player || !s || !split) return;
     // Side by side (wide screens) the chart is already next to the row; stacked (phones) bring it into view.
@@ -533,9 +537,14 @@
       if (r.top > innerHeight - 120 || r.bottom < 160) s.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
     }
   }
+  // The chart panel opens beside the table that was clicked (Players or Who's trending).
+  let panelHome = 'split-season';
   function syncPlayerPanel() {
     const has = !!currentPlayer();
-    document.querySelectorAll('.players-split').forEach((el) => el.classList.toggle('has-player', has));
+    const home = document.getElementById(panelHome) || document.getElementById('split-season');
+    const panel = document.getElementById('player-trend');
+    if (panel && home && panel.parentElement !== home) home.appendChild(panel);
+    document.querySelectorAll('.psplit').forEach((el) => el.classList.toggle('has-player', has && el === home));
   }
   document.querySelectorAll('#pt-close').forEach((b) => b.addEventListener('click', () => { if (state.player) openPlayer(state.player); }));
   function markPlayerRows() {

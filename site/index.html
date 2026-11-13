@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="theme.css?v=20261113h">
-<link rel="stylesheet" href="app.css?v=20261113h">
+<link rel="stylesheet" href="theme.css?v=20261113i">
+<link rel="stylesheet" href="app.css?v=20261113i">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js?v=20261113h"></script>
+<script src="runtime.js?v=20261113i"></script>
 </head>
 <body>
 <header class="app-head" id="top">
@@ -88,6 +88,7 @@
 
   <div class="view" data-view="players">
     <div class="players-split">
+      <div class="psplit" id="split-season">
   <section class="hr-sec" id="season">
     <div>
       <h2>Players</h2>
@@ -132,6 +133,8 @@
       <div class="hr-chart" data-source="rolling" data-draw="playerChart"></div>
       <div class="pt-stats" data-source="rolling season" data-draw="playerStats"></div>
     </section>
+      </div>
+      <div class="psplit" id="split-hot">
     <section class="hr-sec hr-trend-grid" id="hot">
       <h3>Who's trending</h3>
       <p class="hr-sub">Last five games against the season average (6+ games played).</p>
@@ -150,6 +153,7 @@
         </table>
       </div>
     </section>
+      </div>
     </div>
   </div>
 
@@ -363,6 +367,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js?v=20261113h"></script>
+<script src="app.js?v=20261113i"></script>
 </body>
 </html>
