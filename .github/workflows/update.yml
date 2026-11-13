@@ -10,7 +10,6 @@ on:
   schedule:
     - cron: "23,53 3-12 * * *"
     - cron: "23 0-2,13-23 * * *"
-    - cron: "29 16 13 11 *"   # TEMP: one-off test of the scheduler (forces a full update); remove after
   workflow_dispatch:
     inputs:
       force:
@@ -49,7 +48,7 @@ jobs:
       - name: Is there a finished game day to process?
         id: check
         env:
-          FORCE: ${{ github.event.inputs.force || (github.event.schedule == '29 16 13 11 *' && 'true') || 'false' }}
+          FORCE: ${{ github.event.inputs.force || 'false' }}
         run: python should_update.py
 
       - name: Restore NHL API cache
