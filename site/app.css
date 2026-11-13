@@ -368,3 +368,4 @@ details.how a { color: inherit; }
 @media (max-width: 720px) { .scope-group { grid-template-columns: max-content repeat(8, minmax(0, 1fr)); } .scope-avg { margin-left: 4px; padding: 0 3px; } }
 .hr details#method .method-body { columns: 2 340px; column-gap: 40px; margin-top: 10px; }
 .hr details#method .method-body p { max-width: none; margin: 0 0 12px; break-inside: avoid-column; }
+
