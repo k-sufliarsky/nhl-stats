@@ -1,6 +1,9 @@
 (function () {
   const fmt1 = d3.format('.1f');
   const fmt2 = d3.format('.2f');
+  const fmt0 = d3.format('.0f');
+  // Player ratings run 0-100 (50 = average player); game scores run 0-10. Chips colour on the 0-10 scale.
+  const rchip = (v) => chip(v / 10, fmt0(v));
   const dateFmt = d3.utcFormat('%b %-d');
   const longDate = d3.utcFormat('%B %-d, %Y');
   const parseDate = d3.utcParse('%Y-%m-%d');
@@ -66,7 +69,8 @@
   function statLine(r) {
     if (r.pos === 'G') return r.SV + ' saves on ' + r.SA + ' shots · ' + r.GA + ' GA vs ' + r.xGA + ' expected · TOI ' + r.toi;
     const a = (+r.A1 || 0) + (+r.A2 || 0), g = +r.G || 0;
-    return g + ' G, ' + a + ' A (' + (g + a) + (g + a === 1 ? ' pt' : ' pts') + ') · ' + r.SOG + ' SOG · TOI ' + r.toi;
+    return g + ' G, ' + a + ' A (' + (g + a) + (g + a === 1 ? ' pt' : ' pts') + ') · ' + r.SOG + ' SOG' +
+      (r.ixG != null && r.ixG !== '' ? ' · ' + fmt2(+r.ixG) + ' xG' : '') + ' · TOI ' + r.toi;
   }
   const pctLine = (r) => (r.pct === '' || r.pct == null ? null : 'Better than ' + Math.round(+r.pct) + '% of ' + ({ G: 'goalie', D: 'defenseman' }[r.pos] || 'forward') + ' games this season');
   // Index a dataset once per load instead of filtering 11,000 rows on every redraw.
@@ -90,28 +94,35 @@
 
   dash.calc('season', {
     title: 'Season averages by player',
-    description: 'Games played, average, last-5 average, best and worst per-game rating, change (last 5 minus season) and spread (standard deviation) for each player on each team.',
-    inputs: ['ratings'],
-    fn: (ratings) => {
+    description: 'Rating now (running estimate after the latest game) and where it started the season, games played, average, last-5 average, best and worst per-game score, change (last 5 minus season), spread, and play-driving rating for each player on each team.',
+    inputs: ['ratings', 'players'],
+    fn: (ratings, players) => {
       const byPlayer = new Map();
+      const startOf = new Map((players || []).map((p) => [p.player_id, p]));
       for (const r of ratings) {
         const key = r.team + ',' + r.player_id;
         if (!byPlayer.has(key)) byPlayer.set(key, { team: r.team, player_id: r.player_id, name: r.name, pos: r.pos, games: [] });
-        byPlayer.get(key).games.push({ date: r.date, rating: +r.rating });
+        byPlayer.get(key).games.push({ date: r.date + r.game_id, rating: +r.rating, form: r.form, form_sd: r.form_sd, drive: r.drive });
         byPlayer.get(key).pos = r.pos;
       }
+      const num = (v) => (v === '' || v == null ? null : +v);
       const round2 = (x) => Math.round(x * 100) / 100;
       const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
       return [...byPlayer.values()].map((p) => {
         const ratingsInOrder = p.games.sort((a, b) => (a.date < b.date ? -1 : 1)).map((g) => g.rating);
+        const last = p.games[p.games.length - 1];
+        const info = startOf.get(p.player_id) || {};
+        const now = num(last.form), start = num(info.form_start);
         return {
+          rating: now, rating_sd: num(last.form_sd), start, since_start: now != null && start != null ? Math.round((now - start) * 10) / 10 : null,
+          drive: num(last.drive), adj_net: num(info.adj_net),
           team: p.team, player_id: p.player_id, name: p.name, pos: p.pos, gp: ratingsInOrder.length,
           avg: round2(mean(ratingsInOrder)), last5: round2(mean(ratingsInOrder.slice(-5))),
           best: Math.max(...ratingsInOrder), worst: Math.min(...ratingsInOrder), group: p.pos === 'G' ? 'G' : (p.pos === 'D' ? 'D' : 'F'),
           delta: round2(mean(ratingsInOrder.slice(-5)) - mean(ratingsInOrder)),
           spread: round2(Math.sqrt(mean(ratingsInOrder.map((x) => (x - mean(ratingsInOrder)) ** 2)))),
         };
-      }).sort((a, b) => b.avg - a.avg);
+      }).sort((a, b) => (b.rating ?? b.avg * 10) - (a.rating ?? a.avg * 10));
     },
   });
 
@@ -190,14 +201,18 @@
       tr.dataset.key = p.team + ',' + p.player_id;
       const td = (txt, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = txt; tr.appendChild(c); return c; };
       td(p.name, 'l'); td(p.team, 'l'); td(p.pos, 'l'); td(String(p.gp));
-      const avg = document.createElement('td');
+      const rt = p.rating ?? p.avg * 10;
+      const cell = document.createElement('td');
       const wrap = document.createElement('span'); wrap.className = 'hr-bar';
       const bar = document.createElement('i'); const fill = document.createElement('b');
-      fill.style.width = (p.avg * 10) + '%';
-      bar.appendChild(fill); wrap.append(bar, chip(p.avg, fmt2(p.avg)));
-      avg.appendChild(wrap); tr.appendChild(avg);
+      fill.style.width = rt + '%';
+      bar.appendChild(fill); wrap.append(bar, rchip(rt));
+      cell.appendChild(wrap); tr.appendChild(cell);
+      if (p.rating_sd != null) cell.title = 'Likely range ' + fmt0(Math.max(0, rt - p.rating_sd)) + '–' + fmt0(Math.min(100, rt + p.rating_sd));
+      if (p.since_start == null) td('—'); else td((p.since_start > 0 ? '+' : '') + fmt1(p.since_start), p.since_start >= 0.5 ? 'pos' : (p.since_start <= -0.5 ? 'neg' : ''));
+      const avg = document.createElement('td'); avg.appendChild(chip(p.avg, fmt2(p.avg))); tr.appendChild(avg);
       const l5 = document.createElement('td'); l5.appendChild(chip(p.last5, fmt2(p.last5))); tr.appendChild(l5);
-      td(fmt1(p.best)); td(fmt1(p.worst));
+      if (p.drive == null) td('—'); else { const d = document.createElement('td'); d.appendChild(rchip(p.drive)); tr.appendChild(d); }
       tr.className = 'pick'; tr.tabIndex = 0;
       tr.addEventListener('click', () => openPlayer(p.player_id));
       tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPlayer(p.player_id); } });
@@ -254,7 +269,7 @@
         td.dataset.where = 'game_id=' + r.game_id + '&player_id=' + r.player_id;
         const show = () => showTooltip(td.getBoundingClientRect(), [
           r.name + ' · ' + fmt1(v), gameLabel(r),
-          statLine(r) + (r.pos === 'G' ? '' : ' · 5v5 attempts ' + r.CF + '–' + r.CA + ' · on-ice goals ' + r.GF + '–' + r.GA),
+          statLine(r) + (r.pos === 'G' ? '' : ' · 5v5 on ice: xG ' + r.xGF5 + '–' + r.xGA5 + ', attempts ' + r.CF + '–' + r.CA),
           pctLine(r)].filter(Boolean));
         td.addEventListener('mouseenter', show);
         td.addEventListener('focus', show);
@@ -345,7 +360,8 @@
             team: r.team, player_id: r.player_id, game_id: r.game_id, date: r.date, opp: r.opp, home: r.home,
             result: r.result, score: r.score, rating: +r.rating, pct: r.pct,
             pos: r.pos, toi: r.toi, G: +r.G || 0, A1: +r.A1 || 0, A2: +r.A2 || 0, SOG: r.SOG,
-            SV: r.SV, SA: r.SA, GA: r.GA, xGA: r.xGA,
+            SV: r.SV, SA: r.SA, GA: r.GA, xGA: r.xGA, ixG: r.ixG, xgs: r.xgs, gs: r.gs,
+            form: r.form === '' || r.form == null ? null : +r.form, form_sd: r.form_sd === '' || r.form_sd == null ? null : +r.form_sd,
             roll5: Math.round(d3.mean(window5, (x) => +x.rating) * 100) / 100,
           });
         });
@@ -443,13 +459,19 @@
     el.appendChild(svg.node());
     const tw = d3.max(yTicks, (t) => { const n = probe.append('text').text(t).node(); return n.getComputedTextLength(); }) || 14;
     probe.remove();
-    const m = { top: 12, right: 16, bottom: 26, left: Math.ceil(tw) + 18 };
+    const m = { top: 12, right: opts.right ? 34 : 16, bottom: 26, left: Math.ceil(tw) + 18 };
     const x = d3.scaleUtc().domain(d3.extent(pts, (p) => p.d)).range([m.left, width - m.right]);
     if (pts.length === 1) x.domain([d3.utcDay.offset(pts[0].d, -1), d3.utcDay.offset(pts[0].d, 1)]);
     const y = d3.scaleLinear().domain([0, 10]).range([height - m.bottom, m.top]);
 
     svg.append('g').attr('transform', `translate(${m.left},0)`)
       .call(d3.axisLeft(y).tickValues(yTicks).tickSize(-(width - m.left - m.right)).tickPadding(8));
+    if (opts.right) {   // the rating's own 0-100 scale
+      const ra = svg.append('g').attr('transform', `translate(${width - m.right},0)`)
+        .call(d3.axisRight(y).tickValues(yTicks).tickFormat((t) => t * 10).tickSize(0).tickPadding(6));
+      ra.selectAll('text').style('fill', dash.colors[0]);
+      ra.select('.domain').remove();
+    }
     const xTickCount = Math.max(2, Math.floor((width - m.left - m.right) / 120));
     svg.append('g').attr('transform', `translate(0,${height - m.bottom})`)
       .call(d3.axisBottom(x).ticks(Math.min(xTickCount, pts.length)).tickFormat(d3.utcFormat('%b %-d')).tickSize(0).tickPadding(10));
@@ -457,6 +479,10 @@
     svg.append('line').attr('x1', m.left).attr('x2', width - m.right).attr('y1', y(5)).attr('y2', y(5))
       .style('stroke', 'var(--cds-chart-reference)').style('stroke-width', 1.5).style('stroke-dasharray', '5 4');
 
+    if (pts.length > 1 && pts.every((p) => p.lo != null)) {
+      svg.append('path').datum(pts).attr('d', d3.area().x((p) => x(p.d)).y0((p) => y(p.lo)).y1((p) => y(p.hi)).curve(d3.curveMonotoneX))
+        .style('fill', dash.colors[0]).style('opacity', 0.14);
+    }
     svg.append('path').datum(pts).attr('d', d3.line().x((p) => x(p.d)).y((p) => y(p.v)))
       .style('fill', 'none').style('stroke', 'var(--cds-chart-muted)').style('stroke-width', 1);
     const roll = svg.append('path').datum(pts).attr('d', d3.line().x((p) => x(p.d)).y((p) => y(p.roll)))
@@ -491,6 +517,33 @@
   }
 
   const sign = (v) => (v > 0 ? '+' : '') + fmt2(v);
+
+  // Method notes filled from the model's own numbers (nhl_meta.json).
+  dash.draw('methodXg', (el) => {
+    const m = dash.data('meta');
+    const xg = m.status === 'ok' && m.data ? m.data.xg : null;
+    if (!xg || !xg.frozen) return;
+    const seasons = xg.trained_on.map((s) => s.slice(0, 4) + '–' + s.slice(6, 8));
+    el.textContent = 'the ' + seasons.join(' and ') + ' NHL seasons';
+  });
+  dash.draw('methodChecks', (el) => {
+    const m = dash.data('meta');
+    const md = m.status === 'ok' && m.data ? m.data.model : null;
+    if (!md) { el.textContent = ''; return; }
+    const sh = md.checks.split_half || {};
+    const r = (k) => (sh[k] ? sh[k][0].toFixed(2) : '?');
+    const parts = ['How well it holds up: ',
+      'splitting last season into odd and even games, a player\'s average xG Game Score in one half matches the other half with a correlation of ' + r('xG Game Score per game') +
+      ' (published Game Score ' + r('Game Score per game') + '; goals per 60 alone ' + r('goals per 60') + ', expected goals per 60 ' + r('ixG per 60') + ').'];
+    if (md.xg_check) parts.push(' On this season\'s shots, which it never saw, the xG model ranks goals above non-goals ' + Math.round(md.xg_check.auc * 100) + '% of the time (AUC ' + md.xg_check.auc.toFixed(2) + ').');
+    const f = md.filters && md.filters.form && md.filters.form.check;
+    if (f) parts.push(' This season, the rating before each game predicts that game\'s score with a correlation of ' + f.corr_rating_vs_next_game.toFixed(2) +
+      ', against ' + f.corr_season_avg_vs_next_game.toFixed(2) + ' for the player\'s season-to-date average. Single games stay noisy either way.');
+    el.textContent = parts.join('');
+  });
+  document.querySelectorAll('details.how a[href="#method"]').forEach((a) => a.addEventListener('click', () => {
+    const d = document.getElementById('method'); if (d) d.open = true;
+  }));
 
   dash.draw('teamTrendText', (el) => {
     const f = dash.data('teamForm');
@@ -528,10 +581,15 @@
     const W = 'team=' + encodeURIComponent(p.team) + '&player_id=' + encodeURIComponent(p.player_id);
     const players = teamPlayers().filter((q) => q.gp >= 6);
     const medianSpread = d3.median(players, (q) => q.spread);
-    const parts = [
-      p.name + ' has averaged ', mark('b', 'season', 'avg', W, fmt2(p.avg)), ' over ', mark('span', 'season', 'gp', W, String(p.gp)),
-      ' games, ranging from ', mark('span', 'season', 'worst', W, fmt1(p.worst)), ' to ', mark('span', 'season', 'best', W, fmt1(p.best)), '. ',
-    ];
+    const parts = [];
+    if (p.rating != null) {
+      parts.push(p.name + "'s rating is ", mark('b', 'season', 'rating', W, fmt0(p.rating)), ' / 100');
+      if (p.start != null) parts.push(' (started the season at ', mark('span', 'season', 'start', W, fmt0(p.start)), ')');
+      parts.push('. ');
+    }
+    parts.push(
+      (p.rating != null ? 'Game scores have averaged ' : p.name + ' has averaged '), mark('b', 'season', 'avg', W, fmt2(p.avg)), ' over ', mark('span', 'season', 'gp', W, String(p.gp)),
+      ' games, ranging from ', mark('span', 'season', 'worst', W, fmt1(p.worst)), ' to ', mark('span', 'season', 'best', W, fmt1(p.best)), '. ');
     if (p.gp >= 6) {
       const word = Math.abs(p.delta) < 0.25 ? 'level with' : (p.delta > 0 ? 'above' : 'below');
       parts.push('The last five games average ', mark('b', 'season', 'last5', W, fmt2(p.last5)), ', ' + word + ' the season (',
@@ -559,12 +617,20 @@
     }
     if (d.status !== 'ok' || !d.data) { el.textContent = '—'; return; }
     const pts = (groupOf(d.data, 'teamPlayer', (r) => r.team + ',' + r.player_id).get(p.team + ',' + p.player_id) || [])
-      .map((r) => ({ d: parseDate(r.date), v: r.rating, roll: r.roll5, r, fill: hrColor(r.rating) }));
+      .map((r) => {
+        const hasForm = r.form != null;
+        // the rating (0-100) is drawn on the same axis as game scores (0-10), divided by ten
+        return { d: parseDate(r.date), v: r.rating, roll: hasForm ? r.form / 10 : r.roll5, r, fill: hrColor(r.rating),
+          lo: hasForm && r.form_sd != null ? Math.max(0, r.form - r.form_sd) / 10 : null,
+          hi: hasForm && r.form_sd != null ? Math.min(100, r.form + r.form_sd) / 10 : null };
+      });
     ratingChart(el, pts, {
-      label: p.name + "'s rating by game this season, with a five-game rolling average",
-      title: (q) => p.name + ' · ' + fmt1(q.v),
+      label: p.name + "'s score in each game this season (0-10, left axis), with the player's rating after each game (0-100, right axis)",
+      right: pts.some((q) => q.r.form != null),
+      title: (q) => p.name + ' · game score ' + fmt1(q.v),
       lines: (q) => [longDate(q.d) + ', ' + q.r.result + ' ' + q.r.score + (String(q.r.home) === 'True' ? ' vs ' : ' at ') + q.r.opp,
-        statLine(q.r), pctLine(q.r), '5-game average ' + fmt2(q.roll)].filter(Boolean),
+        statLine(q.r), pctLine(q.r),
+        q.r.form != null ? 'Rating after this game ' + fmt0(q.r.form) + ' / 100' + (q.r.form_sd != null ? ' (likely ' + fmt0(q.lo * 10) + '–' + fmt0(q.hi * 10) + ')' : '') : '5-game average ' + fmt2(q.roll)].filter(Boolean),
     });
   });
 
@@ -628,7 +694,7 @@
     if (!players.length) { el.textContent = '—'; return; }
     const cur = currentPlayer();
     for (const [grp, label] of [['F', 'Forwards'], ['D', 'Defense'], ['G', 'Goalies']]) {
-      const list = d3.sort(players.filter((p) => p.group === grp), (p) => -p.avg);
+      const list = d3.sort(players.filter((p) => p.group === grp), (p) => -(p.rating ?? p.avg * 10));
       if (!list.length) continue;
       const box = document.createElement('div');
       const h = document.createElement('h4'); h.textContent = label;
@@ -637,10 +703,10 @@
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'hr-player';
         b.setAttribute('aria-pressed', String(!!cur && cur.player_id === p.player_id));
-        b.setAttribute('aria-label', p.name + ', ' + p.pos + ', average ' + fmt2(p.avg) + ' over ' + p.gp + ' games');
+        b.setAttribute('aria-label', p.name + ', ' + p.pos + ', rating ' + fmt0(p.rating ?? p.avg * 10) + ' after ' + p.gp + ' games');
         const n = document.createElement('span'); n.className = 'pn'; n.textContent = p.name;
         const pp = document.createElement('span'); pp.className = 'pp'; pp.textContent = p.pos + ' · ' + p.gp; n.appendChild(pp);
-        b.append(n, chip(p.avg, fmt2(p.avg)));
+        b.append(n, rchip(p.rating ?? p.avg * 10));
         b.addEventListener('click', () => {
           state.player = state.player === p.player_id ? null : p.player_id;   // click again to clear
           ['playerGrid', 'playerText', 'playerChart', 'hotRows'].forEach((x) => dash.draw(x));

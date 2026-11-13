@@ -18,7 +18,7 @@ on:
         default: false
   push:
     branches: [main]
-    paths: ["site/**", "nhl_ratings.py", ".github/workflows/update.yml"]
+    paths: ["site/**", "nhl_ratings.py", "rating_model.py", "model/**", ".github/workflows/update.yml"]
 
 permissions:
   contents: write

@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="theme.css?v=20261113a">
-<link rel="stylesheet" href="app.css?v=20261113a">
+<link rel="stylesheet" href="theme.css?v=20261113b">
+<link rel="stylesheet" href="app.css?v=20261113b">
 <script src="vendor/d3.min.js"></script>
-<script src="runtime.js?v=20261113a"></script>
+<script src="runtime.js?v=20261113b"></script>
 </head>
 <body>
 <header class="app-head" id="top">
@@ -87,7 +87,17 @@
   <section class="hr-sec" id="season">
     <div>
       <h2>Players</h2>
-      <p class="hr-sub">Average 0–10 rating per game this season. 5 is an average NHL game; 7 beats 91% of games, 8 beats 98%. Click a player for their trend.</p>
+      <p class="hr-sub">Rating is a running 0–100 estimate of how good each player is, started from last season: 50 is an average NHL player at the position, 70 about the top 2%. Game scores rate single games on 0–10. Click a player for their trend.</p>
+      <details class="how">
+        <summary>How it's scored</summary>
+        <ul>
+          <li><b>Game score (0–10)</b> — each game's <i>xG Game Score</i>: shots, scoring chances (expected goals), assists, blocks, penalties, faceoffs, and the 5-on-5 chances for and against while on the ice. It's ranked against every game at the position: 5 is average, 7 beats 91% of games, 9 beats 99.6%.</li>
+          <li><b>Rating (0–100)</b> — starts from last season and moves a little toward each new game score, so one big night can't make a star. 50 is average, each 10 points is one standard deviation.</li>
+          <li><b>Goalies</b> — goals saved above expected: the chance quality of every shot faced minus goals allowed.</li>
+          <li><b>Play-driving</b> — the team's 5-on-5 expected-goal edge per 60 minutes with the player on the ice, as a running 0–100 rating; short nights count less.</li>
+        </ul>
+        <a href="#method">Full method</a>
+      </details>
     </div>
     <div class="hr-scroll">
       <table class="hr-full hr-season" data-source="season" data-row-key="team,player_id" aria-label="Season average ratings by player">
@@ -96,10 +106,11 @@
           <th class="l" data-field="team">Team</th>
           <th class="l" data-field="pos">Pos</th>
           <th data-field="gp">GP</th>
-          <th data-field="avg">Avg</th>
-          <th data-field="last5">Last 5</th>
-          <th data-field="best">Best</th>
-          <th data-field="worst">Worst</th>
+          <th data-field="rating" title="Running estimate after the latest game, started from last season">Rating</th>
+          <th data-field="since_start" title="Change since the start of the season">± Season</th>
+          <th data-field="avg" title="Average game score this season">Avg game</th>
+          <th data-field="last5" title="Average game score, last five games">Last 5</th>
+          <th data-field="drive" title="5-on-5 expected-goal edge with the player on the ice, as a running rating">Play-driving</th>
         </tr></thead>
         <tbody data-draw="seasonRows"></tbody>
       </table>
@@ -109,7 +120,7 @@
   <section class="hr-sec" id="trends">
     <div>
       <h2>Trends</h2>
-      <p class="hr-sub">Dots are single games; the line is the five-game average.</p>
+      <p class="hr-sub">Dots are single games. The team line is the five-game average; the player line is the player's rating after each game.</p>
     </div>
 
     <div class="hr-trend-grid" id="team-trend">
@@ -130,8 +141,9 @@
       <div class="hr-players" data-source="season" data-draw="playerGrid"></div>
       <p class="hr-lede" data-draw="playerText">—</p>
       <div class="hr-key" aria-hidden="true">
-        <span><i class="hr-sw hr-sw-dot"></i>Single game</span>
-        <span><i class="hr-sw hr-sw-roll"></i>5-game average</span>
+        <span><i class="hr-sw hr-sw-dot"></i>Game score (0–10, left)</span>
+        <span><i class="hr-sw hr-sw-roll"></i>Rating (0–100, right)</span>
+        <span><i class="hr-sw hr-sw-band"></i>Likely range</span>
         <span><i class="hr-sw hr-sw-ref"></i>League average</span>
       </div>
       <div class="hr-chart" data-source="rolling" data-draw="playerChart"></div>
@@ -309,11 +321,14 @@
 
   <details id="method">
     <summary>How the ratings work</summary>
-    <p><strong>Skaters</strong> get a Game Score, the single-game metric published by Dom Luszczyszyn: 0.75 × goals + 0.70 × primary assists + 0.55 × secondary assists + 0.075 × shots on goal + 0.05 × blocked shots + 0.15 × penalties drawn − 0.15 × penalties taken + 0.01 × faceoffs won − 0.01 × faceoffs lost + 0.05 × 5-on-5 shot attempts for on ice − 0.05 × against + 0.15 × goals for on ice − 0.15 × goals against on ice.</p>
-    <p><strong>Goalies</strong> are rated on goals saved above expected: the expected goals of every unblocked shot they faced minus the goals they allowed. Expected goals come from a model fitted on about 25,000 unblocked shots from every NHL game this season, using shot distance, angle and whether it was a rebound or off a turnover.</p>
-    <p><strong>From score to 0–10:</strong> each raw score is ranked against every NHL forward, defenseman or goalie game this season, and that rank is placed on a bell curve centred on 5. Ranking first matters because Game Score is lopsided: most games are quiet and a few are huge, and a straight scale sent about one forward game in sixty to a perfect 10. Now 7 means better than about 91% of games, 8 better than 98%, 9 better than 99.6%, and 10 is reserved for the very best few games of the season. A goal and an assist usually lands around 7.3, two goals around 7.7, a hat trick around 8.8.</p>
-    <p><strong>Limits:</strong> ratings reward what the scoresheet and on-ice shot counts can see. Defensive positioning, zone exits and passing that never reaches the scoresheet are invisible to it, so treat one game's number as a summary, not a verdict.</p>
-    <p><strong>Data and video:</strong> statistics, standings and team logos come from the NHL's public web API (boxscores, play-by-play and shift charts), documented by the community project NHL-API-Reference. Highlight links open NHL.com, which hosts the videos; nothing is copied here. This page is an independent fan project and is not affiliated with or endorsed by the NHL or its teams. NHL and team names and logos are trademarks of the NHL and its teams.</p>
+    <p>Two layers: a <strong>game score</strong> says what happened in one game; a <strong>rating</strong> says how good a player is, and is updated after every game. One game is a very noisy sample, and goals are the noisiest part of it, so both lean on shots and expected goals rather than on goals.</p>
+    <p><strong>Expected goals (xG)</strong> is the chance that a shot becomes a goal, from a model trained on <span data-draw="methodXg">the two previous NHL seasons</span> and then frozen: shot distance, angle, shot type, rebound, off a turnover, power play, shorthanded, empty net.</p>
+    <p><strong>Game score.</strong> Skaters get an <em>xG Game Score</em>: Dom Luszczyszyn's published Game Score (0.75 × goals + 0.70 × primary assists + 0.55 × secondary assists + 0.075 × shots on goal + 0.05 × blocks + 0.15 × penalties drawn − 0.15 × taken + 0.01 × faceoffs won − 0.01 × lost + 0.05 × 5-on-5 shot attempts for on ice − 0.05 × against + 0.15 × 5-on-5 goals for on ice − 0.15 × against), with goals replaced by the player's own expected goals and the on-ice shot-attempt and goal terms replaced by on-ice 5-on-5 expected goals for and against. Goalies get goals saved above expected. Each game's number is ranked against every game this season at the position (forwards, defense, goalies) and the rank placed on a bell curve centred on 5: 7 beats 91% of games, 8 beats 98%, 9 beats 99.6%.</p>
+    <p><strong>Rating.</strong> A Kalman filter keeps one running estimate per player plus how sure it is. Each season it starts from last season's final rating, pulled part of the way back to the position average. After each game it moves toward that game's number by a step that is bigger when the estimate is unsure; for play-driving and goalies, also when the game had more 5-on-5 ice time or more shots faced. Missed games and trades add uncertainty. Skaters' main rating runs on xG Game Score; <em>play-driving</em> runs on the 5-on-5 expected-goal difference per 60 minutes on ice; goalies' runs on goals saved above expected per shot. All settings were fitted on past seasons by how well each game's rating predicted the next game. Ratings run 0–100: 50 is the average player at the position and each 10 points is one standard deviation of last season's spread among regulars, so 70 is about the top 2% and 80 is rare.</p>
+    <p data-draw="methodChecks"></p>
+    <p><strong>Limits:</strong> these numbers only see what the play-by-play and shift charts record. Defensive positioning, zone exits and passes that don't lead to a shot are invisible, and on-ice numbers depend on teammates. Treat a single game as a summary, not a verdict.</p>
+    <p><strong>Sources:</strong> Game Score — Luszczyszyn, Hockey Graphs (2016). Why shots and xG beat goals in small samples — Macdonald, Lennon &amp; Sturdivant (2012). Rating updates — state-space models as in Glickman &amp; Stern (1998) and Lopez, Matthews &amp; Baumer (2018), applied here to players.</p>
+    <p><strong>Data and video:</strong> statistics, standings and team logos come from the NHL's public web API (boxscores, play-by-play and shift charts), documented by the community project NHL-API-Reference. Highlight links open NHL.com or YouTube, which host the videos; nothing is copied here. This page is an independent fan project and is not affiliated with or endorsed by the NHL or its teams. NHL and team names and logos are trademarks of the NHL and its teams.</p>
   </details>
   </div>
 </div>
@@ -324,6 +339,6 @@
   <a href="https://github.com/k-sufliarsky/nhl-stats">Source and licensing notes on GitHub</a>.
 </footer>
 </main>
-<script src="app.js?v=20261113a"></script>
+<script src="app.js?v=20261113b"></script>
 </body>
 </html>

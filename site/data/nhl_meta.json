@@ -3,32 +3,23 @@
  "playoffs": false,
  "games": 309,
  "generated": "2026-11-13",
- "generated_at": "2026-11-13T07:49:47Z",
+ "generated_at": "2026-11-13T13:41:58Z",
  "last_game_day": "2026-11-12",
  "reference": {
   "F": {
    "games": 7364,
-   "median_raw": 0.325
+   "median_raw": 0.41
   },
   "D": {
    "games": 3759,
-   "median_raw": 0.225
+   "median_raw": 0.273
   },
   "G": {
    "games": 651,
-   "median_raw": 0.296
+   "median_raw": 0.11
   }
  },
  "scale": "rank -> 5 + 1.5 * normal quantile",
- "xg_shots": 25856,
- "xg_coef": [
-  0.2216,
-  -0.0518,
-  -0.6854,
-  -0.404,
-  0.0224,
-  -0.104
- ],
  "weights": {
   "G": 0.75,
   "A1": 0.7,
@@ -43,5 +34,148 @@
   "CA": -0.05,
   "GF": 0.15,
   "GA": -0.15
+ },
+ "xg_onice_weight": 1.3008,
+ "xg": {
+  "shots": 25855,
+  "frozen": true,
+  "trained_on": [
+   "20242025",
+   "20252026"
+  ],
+  "coef": {
+   "const": 0.66239,
+   "dist/10": -0.27711,
+   "log(1+dist)": -0.62102,
+   "angle/30": -0.51974,
+   "rebound": -0.55195,
+   "rush": -0.24702,
+   "rebound*angle/30": 0.22101,
+   "power play": 0.25423,
+   "shorthanded": 0.30478,
+   "empty net": 4.87611,
+   "snap": 0.32554,
+   "slap": 0.33264,
+   "backhand": -0.4558,
+   "tip-in": -0.91314,
+   "deflected": -0.55099,
+   "wrap-around": -1.25709,
+   "other type": -0.46948
+  }
+ },
+ "model": {
+  "built": "2026-11-13",
+  "filters": {
+   "form": {
+    "params": {
+     "s2": 0.56069,
+     "q_game": 0.00021158,
+     "v_new": 0.0702463,
+     "rho": 0.970483,
+     "q_season": 0.00513704
+    },
+    "mu": {
+     "F": 0.50912,
+     "D": 0.37555
+    },
+    "sd": {
+     "F": 0.30202,
+     "D": 0.27184
+    },
+    "check": {
+     "games": 11123,
+     "corr_rating_vs_next_game": 0.376,
+     "corr_season_avg_vs_next_game": 0.287
+    }
+   },
+   "drive": {
+    "params": {
+     "s2": 46.661,
+     "q_game": 0.00129037,
+     "v_new": 0.0973731,
+     "rho": 0.734312,
+     "q_season": 0.0221333
+    },
+    "mu": {
+     "F": 0.00701,
+     "D": -0.00831
+    },
+    "sd": {
+     "F": 0.3936,
+     "D": 0.39785
+    },
+    "check": {
+     "games": 9319,
+     "corr_rating_vs_next_game": 0.179,
+     "corr_season_avg_vs_next_game": 0.141
+    }
+   },
+   "goalie": {
+    "params": {
+     "s2": 0.0727047,
+     "q_game": 4.23728e-17,
+     "v_new": 2.18855e-05,
+     "rho": 0.741501,
+     "q_season": 1.04249e-05
+    },
+    "mu": {
+     "G": 2e-05
+    },
+    "sd": {
+     "G": 0.00324
+    },
+    "check": {
+     "games": 651,
+     "corr_rating_vs_next_game": 0.067,
+     "corr_season_avg_vs_next_game": 0.033
+    }
+   }
+  },
+  "checks": {
+   "mean_gs": 0.464,
+   "mean_xgs": 0.464,
+   "sd_gs": 0.767,
+   "sd_xgs": 0.805,
+   "split_half": {
+    "Game Score per game": [
+     0.887,
+     612
+    ],
+    "xG Game Score per game": [
+     0.848,
+     612
+    ],
+    "goals per 60": [
+     0.692,
+     612
+    ],
+    "ixG per 60": [
+     0.901,
+     612
+    ],
+    "points per 60": [
+     0.783,
+     612
+    ],
+    "goalie GSAx per game": [
+     0.152,
+     51
+    ]
+   },
+   "next_game": {
+    "last 10 gs -> next gs": 0.325,
+    "last 10 gs -> next xgs": 0.294,
+    "last 10 xgs -> next gs": 0.306,
+    "last 10 xgs -> next xgs": 0.284
+   }
+  },
+  "xg_check": {
+   "shots": 25855,
+   "goals": 1940,
+   "expected": 1940.5,
+   "auc": 0.75,
+   "log_loss": 0.2369
+  },
+  "rapm_penalty": 10
  }
 }

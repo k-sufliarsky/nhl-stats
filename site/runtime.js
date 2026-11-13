@@ -9,6 +9,7 @@
     lines: { url: 'data/nhl_lines.csv', type: 'csv' },
     standings: { url: 'data/nhl_standings.csv', type: 'csv' },
     upcoming: { url: 'data/nhl_upcoming.csv', type: 'csv' },
+    players: { url: 'data/nhl_players.csv', type: 'csv' },
     logosLight: { url: 'data/logos-light.json', type: 'json' },
     logosDark: { url: 'data/logos-dark.json', type: 'json' },
     meta: { url: 'data/nhl_meta.json', type: 'json' },

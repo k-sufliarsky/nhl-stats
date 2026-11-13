@@ -33,6 +33,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
+import rating_model as M
+
 WEB = "https://api-web.nhle.com/v1"
 STATS = "https://api.nhle.com/stats/rest/en"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -102,25 +104,6 @@ def shot_geometry(play, shooter_is_home):
     return dist, angle
 
 
-def xg_features(dist, angle, rebound, rush):
-    return [1.0, dist / 10, math.log1p(dist), angle / 30, float(rebound), float(rush)]
-
-
-def fit_logit(X, y, l2=1.0, iters=50):
-    X, y = np.asarray(X), np.asarray(y, float)
-    w = np.zeros(X.shape[1])
-    R = l2 * np.eye(X.shape[1]); R[0, 0] = 0
-    for _ in range(iters):
-        p = 1 / (1 + np.exp(-X @ w))
-        g = X.T @ (p - y) + R @ w
-        H = (X * (p * (1 - p))[:, None]).T @ X + R
-        step = np.linalg.solve(H, g)
-        w -= step
-        if np.abs(step).max() < 1e-8:
-            break
-    return w
-
-
 # ----------------------------------------------------------------------------- per-game parsing
 def parse_game(gid, box, pbp, shifts):
     home_id, away_id = box["homeTeam"]["id"], box["awayTeam"]["id"]
@@ -146,8 +129,11 @@ def parse_game(gid, box, pbp, shifts):
             return [pid for pid, a, b in on[period] if a <= t < b]
         return [pid for pid, a, b in on[period] if a < t <= b]
 
+    def skater(pid):
+        return info.get(pid, {}).get("group") != "G"
+
     stat = defaultdict(lambda: defaultdict(float))
-    shots = []          # unblocked shots for the xG model / goalie GSAx
+    shots = []          # unblocked shots for the xG model / goalie GSAx / on-ice xG
     last_shot = {}      # team -> (period, t) of last shot attempt
     last_event = None
 
@@ -171,49 +157,91 @@ def parse_game(gid, box, pbp, shifts):
         if kind in CORSI:
             shooter = d.get("scoringPlayerId") or d.get("shootingPlayerId")
             team = team_of.get(shooter, d.get("eventOwnerTeamId"))
-            opp = away_id if team == home_id else home_id
+            is_home = team == home_id
+            five = sit == "1551" and have_shifts
+            here = on_ice(per, t) if five else []
 
             if kind == "goal":
                 stat[shooter]["G"] += 1
                 if d.get("assist1PlayerId"): stat[d["assist1PlayerId"]]["A1"] += 1
                 if d.get("assist2PlayerId"): stat[d["assist2PlayerId"]]["A2"] += 1
-                for pid in on_ice(per, t):
-                    if info.get(pid, {}).get("group") == "G":
-                        continue
-                    stat[pid]["GF" if team_of.get(pid) == team else "GA"] += 1
 
-            if sit == "1551" and have_shifts:   # 5v5 Corsi
-                for pid in on_ice(per, t):
-                    if info.get(pid, {}).get("group") == "G":
-                        continue
-                    stat[pid]["CF" if team_of.get(pid) == team else "CA"] += 1
+            if five:   # 5v5 on-ice shot attempts and goals (Game Score counts both at 5-on-5)
+                for pid in here:
+                    if skater(pid):
+                        mine = team_of.get(pid) == team
+                        stat[pid]["CF" if mine else "CA"] += 1
+                        if kind == "goal":
+                            stat[pid]["GF" if mine else "GA"] += 1
 
             if kind in FENWICK:
-                geo = shot_geometry(pl, team == home_id)
+                geo = shot_geometry(pl, is_home)
                 if geo:
                     prev = last_shot.get(team)
                     rebound = prev is not None and prev[0] == per and 0 <= t - prev[1] <= 3
                     rush = (last_event is not None and last_event[0] == per and 0 <= t - last_event[1] <= 4
-                            and last_event[2] in ("takeaway", "giveaway") )
+                            and last_event[2] in ("takeaway", "giveaway"))
+                    own = opp = 5; opp_goalie = 1
+                    if len(sit) == 4 and sit.isdigit():
+                        ag, a_s, h_s, hg = map(int, sit)
+                        own, opp, opp_goalie = (h_s, a_s, ag) if is_home else (a_s, h_s, hg)
                     shots.append(dict(gid=gid, team=team, shooter=shooter, goalie=d.get("goalieInNetId"),
                                       goal=int(kind == "goal"), dist=geo[0], angle=geo[1],
-                                      rebound=rebound, rush=rush))
+                                      rebound=rebound, rush=rush, shot_type=d.get("shotType") or "",
+                                      pp=own > opp, sh=own < opp, en=opp_goalie == 0 or not d.get("goalieInNetId"),
+                                      per=per, t=t, five=five,
+                                      on_for=[p for p in here if skater(p) and team_of.get(p) == team] if five else [],
+                                      on_against=[p for p in here if skater(p) and team_of.get(p) != team] if five else []))
             if kind == "shot-on-goal":      # only a saved shot can produce a rebound
                 last_shot[team] = (per, t)
         last_event = (per, t, kind)
 
-    return dict(home=home_id, away=away_id, info=info, stat=stat, shots=shots, have_shifts=have_shifts)
+    toi5, stints = five_on_five(on, info, team_of, home_id)
+    return dict(home=home_id, away=away_id, info=info, stat=stat, shots=shots, have_shifts=have_shifts,
+                toi5=toi5, stints=stints)
+
+
+def five_on_five(on, info, team_of, home_id):
+    """5-on-5 time on ice per skater and the 5-on-5 stints (stretches with the same ten skaters), from shift charts."""
+    toi5, stints = defaultdict(int), []
+    for per, lst in on.items():
+        ev = defaultdict(lambda: ([], []))
+        for pid, a, b in lst:
+            if b > a:
+                ev[a][1].append(pid); ev[b][0].append(pid)
+        times, cur = sorted(ev), set()
+        for i, t0 in enumerate(times[:-1]):
+            for p in ev[t0][0]: cur.discard(p)
+            for p in ev[t0][1]: cur.add(p)
+            hs, as_, hg, ag = [], [], 0, 0
+            for p in cur:
+                home = team_of.get(p) == home_id
+                if info.get(p, {}).get("group") == "G":
+                    if home: hg += 1
+                    else: ag += 1
+                elif home: hs.append(p)
+                else: as_.append(p)
+            if len(hs) == 5 and len(as_) == 5 and hg == 1 and ag == 1:
+                t1 = times[i + 1]
+                for p in hs + as_:
+                    toi5[p] += t1 - t0
+                stints.append((per, t0, t1, tuple(hs), tuple(as_)))
+    return toi5, stints
 
 
 # ----------------------------------------------------------------------------- scoring
-def player_rows(gid, P, box):
-    """Raw score for every player (both teams) in one game."""
+def player_rows(gid, P, box, xg_weight):
+    """Per-game numbers for every player (both teams) in one game. Shots must already carry their "xg".
+    xg_weight is the value of one on-ice 5v5 expected goal in xG Game Score (see rating_model.xg_onice_weight)."""
     abbrev = {box["homeTeam"]["id"]: box["homeTeam"]["abbrev"], box["awayTeam"]["id"]: box["awayTeam"]["abbrev"]}
-    xga = defaultdict(float); ga = defaultdict(int); ixg = defaultdict(float)
+    xga = defaultdict(float); ga = defaultdict(int); fa = defaultdict(int); ixg = defaultdict(float)
+    xgf5 = defaultdict(float); xga5 = defaultdict(float)
     for s in P["shots"]:
         ixg[s["shooter"]] += s["xg"]
-        if s["goalie"]:
-            xga[s["goalie"]] += s["xg"]; ga[s["goalie"]] += s["goal"]
+        if s["goalie"] and not s["en"]:
+            xga[s["goalie"]] += s["xg"]; ga[s["goalie"]] += s["goal"]; fa[s["goalie"]] += 1
+        for p in s["on_for"]: xgf5[p] += s["xg"]
+        for p in s["on_against"]: xga5[p] += s["xg"]
     out = []
     for pid, p in P["info"].items():
         toi = p.get("toi", "00:00")
@@ -223,8 +251,10 @@ def player_rows(gid, P, box):
         r = dict(game_id=gid, team=abbrev[p["team"]], player_id=pid, name=p["name"]["default"],
                  pos=p.get("position"), group=p["group"], toi=toi)
         if p["group"] == "G":
-            r.update(SA=p.get("shotsAgainst", 0), SV=p.get("saves", 0), GA=ga[pid],
+            sv = p.get("saves", 0)
+            r.update(SA=p.get("shotsAgainst", 0), SV=sv, GA=ga[pid], FA=fa[pid],
                      xGA=round(xga[pid], 2), raw=round(xga[pid] - ga[pid], 3),
+                     gs=round(-0.75 * p.get("goalsAgainst", ga[pid]) + 0.1 * sv, 3),
                      svpct=p.get("savePctg"), decision=p.get("decision", ""))
         else:
             comp = dict(G=st["G"], A1=st["A1"], A2=st["A2"], SOG=p.get("sog", 0), BLK=p.get("blockedShots", 0),
@@ -233,9 +263,15 @@ def player_rows(gid, P, box):
             if not P["have_shifts"]:     # fall back to boxscore +/- when shift charts are missing
                 pm = p.get("plusMinus", 0); comp["GF"], comp["GA"] = max(pm, 0), max(-pm, 0)
             r.update({k: int(v) for k, v in comp.items()})
+            gs = sum(W[k] * v for k, v in comp.items())
+            # xG Game Score: goals -> individual expected goals; on-ice 5v5 shot attempts and goals -> on-ice 5v5 xG
+            xgs = (gs - W["G"] * comp["G"] + W["G"] * ixg[pid]
+                   - sum(W[k] * comp[k] for k in ("CF", "CA", "GF", "GA"))
+                   + xg_weight * (xgf5[pid] - xga5[pid]))
             r.update(PTS=p.get("points", 0), PM=p.get("plusMinus", 0), HIT=p.get("hits", 0),
                      TK=p.get("takeaways", 0), GV=p.get("giveaways", 0), ixG=round(ixg[pid], 2),
-                     raw=round(sum(W[k] * v for k, v in comp.items()), 3))
+                     xGF5=round(xgf5[pid], 2), xGA5=round(xga5[pid], 2), toi5=round(P["toi5"].get(pid, 0) / 60, 2),
+                     gs=round(gs, 3), xgs=round(xgs, 3), raw=round(xgs, 3))
         out.append(r)
     return out
 
@@ -632,6 +668,43 @@ def upcoming_games(rows, gtype):
     return out
 
 
+# ----------------------------------------------------------------------------- per-player summary
+def player_table(rows, model, priors):
+    """One row per player: current ratings, where he started the season, and teammate-adjusted 5v5 impact (RAPM)."""
+    by = defaultdict(list)
+    for r in sorted(rows, key=lambda r: (r["date"], r["game_id"])):
+        by[r["player_id"]].append(r)
+    adj = {}
+    if model:
+        stints = [st for P in PARSED.values() for st in M.stint_rows(P)]
+        prior = {int(p): tuple(v) for p, v in (priors or {}).get("rapm", {}).items()}
+        adj, _, _ = M.rapm(stints, model["rapm"]["penalty"], prior)
+    out = []
+    for pid, games in by.items():
+        last = games[-1]
+        grp = last["group"]
+        start = ""
+        if model and priors:
+            which = "goalie" if grp == "G" else "form"
+            f = model["filters"][which]
+            p = priors.get(which, {}).get(str(pid))
+            if p:
+                m = f["params"]["rho"] * p[0] + (1 - f["params"]["rho"]) * f["mu"][grp]
+                start = round(M.to_hundred(m, f["mu"][grp], f["sd"][grp]), 1)
+        a = adj.get(pid)
+        out.append(dict(player_id=pid, name=last["name"], team=last["team"], pos=last["pos"], group=grp, gp=len(games),
+                        avg=round(sum(g["rating"] for g in games) / len(games), 2),
+                        form=last.get("form", ""), form_sd=last.get("form_sd", ""), form_start=start,
+                        drive=last.get("drive", ""), drive_xgd=last.get("drive_xgd", ""), gsax100=last.get("gsax100", ""),
+                        toi5=round(sum(float(g.get("toi5") or 0) for g in games), 1),
+                        adj_off=round(a[0], 3) if a else "", adj_def=round(a[1], 3) if a else "",
+                        adj_net=round(a[0] - a[1], 3) if a else ""))
+    return sorted(out, key=lambda r: -(r["form"] or 0))
+
+
+PARSED = {}
+
+
 # ----------------------------------------------------------------------------- main
 def season_window(season):
     """(season id, first day, last day to look at) from the NHL's list of seasons."""
@@ -668,19 +741,39 @@ def main():
     with ThreadPoolExecutor(12) as ex:
         raw = list(ex.map(load_game, all_ids))
     parsed = {gid: parse_game(gid, box, pbp, sh) for gid, box, pbp, sh in raw}
+    PARSED.update(parsed)
     boxes = {gid: box for gid, box, _, _ in raw}
 
-    # --- expected goals model, fitted on every unblocked shot in the calibration games
+    # --- expected goals: the frozen model trained on earlier seasons (model/model.json, from build_model.py).
+    # Without it, fall back to a model fitted on this season's own shots.
+    model = M.load()
     all_shots = [s for g in parsed.values() for s in g["shots"]]
-    X = [xg_features(s["dist"], s["angle"], s["rebound"], s["rush"]) for s in all_shots]
-    y = [s["goal"] for s in all_shots]
-    w = fit_logit(X, y)
-    xg = 1 / (1 + np.exp(-np.asarray(X) @ w))
-    for s, v in zip(all_shots, xg):
-        s["xg"] = float(v)
-    print(f"xG model: {len(all_shots)} unblocked shots, {sum(y)} goals", file=sys.stderr)
+    xg_model = model["xg"] if model else M.fit_xg(all_shots)
+    M.apply_xg(all_shots, xg_model)
+    k = model["xg_onice_weight"] if model else M.xg_onice_weight(parsed.values())
+    print(f"xG: {len(all_shots)} unblocked shots, {sum(s['goal'] for s in all_shots)} goals, "
+          f"{sum(s['xg'] for s in all_shots):.0f} expected ({'frozen model' if model else 'fitted on this season'})", file=sys.stderr)
 
-    rows = [r for gid in all_ids for r in player_rows(gid, parsed[gid], boxes[gid])]
+    rows = [r for gid in all_ids for r in player_rows(gid, parsed[gid], boxes[gid], k)]
+    for r in rows:
+        r.update(season=str(season_id), date=boxes[r["game_id"]]["gameDate"])
+
+    # --- ratings over time: Kalman filters started from last season (see rating_model.py)
+    priors = M.load_priors(str(season_id)) or {}
+    if model:
+        for which in M.FILTERS:
+            f = model["filters"][which]
+            prior = {int(p): (m, v, priors["from_season"]) for p, (m, v) in priors.get(which, {}).items()}
+            _, _, _, res = M.run_filter(M.observations(rows, which), f["params"], f["mu"], prior=prior, collect=True)
+            for row, pre, (m, v), y, scale in res:
+                mu, sd = f["mu"][row["group"]], f["sd"][row["group"]]
+                col = "drive" if which == "drive" else "form"
+                row[col] = round(M.to_hundred(m, mu, sd), 1)
+                row[col + "_sd"] = round(M.RATING_SPREAD * math.sqrt(v) / sd, 1)
+                if which == "drive":
+                    row["drive_xgd"] = round(m, 3)
+                if which == "goalie":
+                    row["gsax100"] = round(m * 100, 2)
 
     # --- 0-10: rank every player-game within its position group, then place the rank on a bell curve.
     # (A straight z-score sent ~1 in 60 forward games to 10, because Game Score has a long right tail.)
@@ -713,12 +806,13 @@ def main():
             is_home = box["homeTeam"]["abbrev"] == r["team"]
             me, opp = (box["homeTeam"], box["awayTeam"]) if is_home else (box["awayTeam"], box["homeTeam"])
             res = "W" if me["score"] > opp["score"] else ("OTL" if last in ("OT", "SO") else "L")
-            r.update(date=box["gameDate"], opp=opp["abbrev"], home=is_home, score=f'{me["score"]}-{opp["score"]}',
+            r.update(opp=opp["abbrev"], home=is_home, score=f'{me["score"]}-{opp["score"]}',
                      result=res + ("" if last == "REG" else f" ({last})"))
     os.makedirs(a.out, exist_ok=True)
-    keys = ["date", "team", "opp", "home", "score", "result", "name", "pos", "toi", "rating", "pct", "raw",
+    keys = ["date", "team", "opp", "home", "score", "result", "name", "pos", "toi", "rating", "pct", "raw", "gs", "xgs",
+            "form", "form_sd", "drive", "drive_sd", "drive_xgd", "gsax100",
             "G", "A1", "A2", "PTS", "SOG", "ixG", "BLK", "PD", "PT", "FOW", "FOL", "CF", "CA", "GF", "GA", "PM",
-            "HIT", "TK", "GV", "SA", "SV", "xGA", "svpct", "decision", "game_id", "player_id"]
+            "HIT", "TK", "GV", "toi5", "xGF5", "xGA5", "SA", "SV", "FA", "xGA", "svpct", "decision", "game_id", "player_id"]
     def write_csv(name, data, cols):
         with open(os.path.join(a.out, name), "w", newline="") as f:
             wr = csv.DictWriter(f, cols, extrasaction="ignore"); wr.writeheader(); wr.writerows(data)
@@ -735,10 +829,17 @@ def main():
     up_cols = ["game_id", "date", "start_utc", "away", "home", "venue", "tv_national", "home_win_pct", "away_win_pct",
                "away_star", "away_star_avg", "home_star", "home_star_avg", "gamecenter_url"]
     write_csv("nhl_upcoming.csv", upcoming, up_cols)
+    players = player_table(rows, model, priors)
+    write_csv("nhl_players.csv", players, list(players[0].keys()))
     meta = dict(season=str(season_id), playoffs=a.playoffs, games=len(all_ids), generated=time.strftime("%Y-%m-%d"),
                 generated_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), last_game_day=max(g["date"] for g in games_out),
-                reference=ref, scale="rank -> 5 + %g * normal quantile" % SPREAD,
-                xg_shots=len(all_shots), xg_coef=[round(float(c), 4) for c in w], weights=W)
+                reference=ref, scale="rank -> 5 + %g * normal quantile" % SPREAD, weights=W, xg_onice_weight=k,
+                xg=dict(shots=len(all_shots), frozen=bool(model), trained_on=model["trained_on"] if model else [str(season_id)],
+                        coef=dict(zip(xg_model["names"], xg_model["coef"]))),
+                model=dict(built=model["built"], filters={w: {k_: f[k_] for k_ in ("params", "mu", "sd", "check") if k_ in f}
+                                                         for w, f in model["filters"].items()},
+                           checks=model["checks"], xg_check=model["xg"].get("check"), rapm_penalty=model["rapm"]["penalty"])
+                if model else None)
     with open(os.path.join(a.out, "nhl_meta.json"), "w") as f:
         json.dump(meta, f, indent=1)
     ups = sorted((g for g in games_out if g["upset"]), key=lambda g: g["winner_pregame_prob"])
