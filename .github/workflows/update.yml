@@ -93,7 +93,11 @@ jobs:
 
   deploy:
     needs: update
-    if: github.event_name == 'push' || needs.update.outputs.changed == 'true'
+    # Publish when there's new data, and always on pushes, manual runs and re-runs. A re-run of just this job
+    # reuses the update job's outputs from the first attempt, so it would otherwise skip again.
+    if: >-
+      github.event_name != 'schedule' || fromJSON(github.run_attempt) > 1 ||
+      needs.update.outputs.changed == 'true'
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 from October 2026
     environment:
       name: github-pages
