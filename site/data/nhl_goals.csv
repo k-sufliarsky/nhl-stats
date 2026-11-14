@@ -1939,3 +1939,13 @@ game_id,period,period_type,time,team,scorer,assists,strength,score_after,clip_ur
 2026020309,2,REG,09:34,CAR,Juuso Välimäki,Logan Stankoven,EV,3-0 (CAR-SEA),https://nhl.com/video/car-sea-valimaki-scores-goal-against-philipp-grubauer-6408299367112
 2026020309,3,REG,11:41,CAR,Sebastian Aho,"K'Andre Miller, Andrei Svechnikov",EV,4-0 (CAR-SEA),https://nhl.com/video/car-sea-aho-scores-goal-against-philipp-grubauer-6408299614112
 2026020309,3,REG,13:15,SEA,Frederick Gaudreau,Mackie Samoskevich,EV,4-1 (CAR-SEA),https://nhl.com/video/car-sea-gaudreau-scores-goal-against-brandon-bussi-6408299521112
+2026020310,1,REG,12:13,VAN,Elias Pettersson,"Zeev Buium, Brock Boeser",EV,0-1 (NYR-VAN),https://nhl.com/video/nyr-van-pettersson-scores-goal-against-dylan-garand-6408364008112
+2026020310,1,REG,18:47,NYR,Gabe Perreault,"Alexis Lafrenière, J.T. Miller",EV,1-1 (NYR-VAN),https://nhl.com/video/nyr-van-perreault-scores-goal-against-kevin-lankinen-6408363632112
+2026020310,2,REG,08:21,NYR,Oliver Bjorkstrand,"J.T. Miller, Adam Fox",PP,2-1 (NYR-VAN),https://nhl.com/video/nyr-van-bjorkstrand-scores-ppg-against-leevi-merilainen-6408365407112
+2026020310,2,REG,13:00,NYR,Glenn Gawdin,,EV,3-1 (NYR-VAN),https://nhl.com/video/nyr-van-gawdin-scores-goal-against-leevi-merilainen-6408366508112
+2026020310,2,REG,15:14,NYR,Alexis Lafrenière,"Mika Zibanejad, Gabe Perreault",EV,4-1 (NYR-VAN),https://nhl.com/video/nyr-van-lafreniere-scores-goal-against-leevi-merilainen-6408367208112
+2026020310,2,REG,16:10,NYR,Glenn Gawdin,"Vladislav Gavrikov, Jaroslav Chmelar",EV,5-1 (NYR-VAN),https://nhl.com/video/nyr-van-gawdin-scores-goal-against-leevi-merilainen-6408366220112
+2026020311,1,REG,07:56,NSH,Ryan O'Reilly,"Steven Stamkos, Mavrik Bourque",EV,1-0 (NSH-VGK),https://nhl.com/video/nsh-vgk-o-reilly-scores-goal-against-adin-hill-6408366204112
+2026020311,1,REG,11:19,VGK,Victor Olofsson,"Ivan Barbashev, Tomas Hertl",EV,1-1 (NSH-VGK),https://nhl.com/video/nsh-vgk-olofsson-scores-goal-against-juuse-saros-6408364844112
+2026020311,2,REG,10:48,VGK,Rasmus Andersson,"Mitch Marner, Parker Wotherspoon",EV,1-2 (NSH-VGK),https://nhl.com/video/nsh-vgk-andersson-scores-goal-against-juuse-saros-6408369003112
+2026020311,3,REG,09:44,NSH,Ryan O'Reilly,"Adam Wilsby, Roman Josi",EV,2-2 (NSH-VGK),https://nhl.com/video/nsh-vgk-o-reilly-scores-goal-against-adin-hill-6408368856112
