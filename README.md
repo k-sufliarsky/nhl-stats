@@ -67,7 +67,7 @@ API responses are cached in `cache/` (not committed), so re-runs only download n
 
 ## Automatic updates
 
-`.github/workflows/update.yml` runs a quick check with `should_update.py` twice an hour overnight (US Eastern) and hourly the rest of the day, at :23 and :53. GitHub's scheduler is best-effort and often skips runs at :00 and :30; the daytime checks catch up any night it missed. Pushes to `main` run the check too. The full update runs only when:
+`.github/workflows/update.yml` runs a quick check with `should_update.py` twice an hour overnight (US Eastern) and hourly the rest of the day, at :23 and :53. GitHub's scheduler is best-effort: it often skips runs at :00 and :30 and can drop most of a night's checks. So a scheduled check that finds the night's games under way doesn't exit: it keeps checking every 10 minutes, for up to `WAIT_HOURS` (default 5), until they're done. The daytime checks catch up any night that was still missed. Pushes to `main` run the check too. The full update runs only when:
 
 1. every game of the latest game day (US Eastern date) is final,
 2. at least `HOURS_AFTER_LAST_START` hours (default **3**) have passed since that day's last game started, and

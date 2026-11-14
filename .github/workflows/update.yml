@@ -5,6 +5,8 @@ name: Update data and publish site
 # commit the new data, publish the site.
 # GitHub's scheduler is best-effort and often skips runs at :00 and :30, so the checks run at odd minutes:
 # twice an hour overnight (US Eastern), and hourly the rest of the day so a skipped night is caught up next morning.
+# GitHub drops many scheduled runs, so a scheduled run that finds tonight's games under way doesn't give up: its
+# "wait" job keeps checking every 10 minutes (up to WAIT_HOURS) until they're done, then the update runs.
 # Pushes to main also run the check (and always republish the site).
 on:
   schedule:
@@ -25,21 +27,41 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: update-and-publish
-  cancel-in-progress: false
-
 env:
   # How long after the day's last game starts to update. Games take about 2.5 hours; raise or lower to taste.
   HOURS_AFTER_LAST_START: "3"
+  # How long a scheduled run keeps waiting for games in progress to finish.
+  WAIT_HOURS: "5"
 
+# Each job has its own concurrency group, so a scheduled run waiting for games never holds up a push's update or deploy.
 jobs:
-  update:
+  wait:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 from October 2026
+    timeout-minutes: 330
+    concurrency:
+      group: wait-for-games   # one waiting run at a time; later scheduled runs queue behind it
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - name: Wait until tonight's games are done (if they're under way)
+        run: python3 should_update.py --wait
+
+  update:
+    needs: wait
+    if: ${{ !cancelled() && needs.wait.result != 'failure' }}
+    runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 from October 2026
+    concurrency:
+      group: update-data
+      cancel-in-progress: false
     outputs:
       changed: ${{ steps.commit.outputs.changed }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main   # not the triggering commit: a scheduled run may have waited hours
 
       - uses: actions/setup-python@v7
         with:
@@ -96,9 +118,13 @@ jobs:
     # Publish when there's new data, and always on pushes, manual runs and re-runs. A re-run of just this job
     # reuses the update job's outputs from the first attempt, so it would otherwise skip again.
     if: >-
+      ${{ !cancelled() && needs.update.result == 'success' && (
       github.event_name != 'schedule' || fromJSON(github.run_attempt) > 1 ||
-      needs.update.outputs.changed == 'true'
+      needs.update.outputs.changed == 'true') }}
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 from October 2026
+    concurrency:
+      group: publish-site
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
