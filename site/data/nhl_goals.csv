@@ -2064,3 +2064,12 @@ game_id,period,period_type,time,team,scorer,assists,strength,score_after,clip_ur
 2026020330,2,REG,17:43,NSH,Nils Hoglander,Adam Wilsby,EV,1-3 (NSH-SJS),https://nhl.com/video/nsh-sjs-hoglander-scores-goal-against-alex-nedeljkovic-6408432897112
 2026020330,3,REG,07:40,SJS,Macklin Celebrini,"Will Smith, Jacob Trouba",EV,1-4 (NSH-SJS),https://nhl.com/video/nsh-sjs-celebrini-scores-goal-against-juuse-saros-6408434002112
 2026020330,3,REG,16:35,NSH,Steven Stamkos,"Filip Forsberg, Ryan O'Reilly",PP,2-4 (NSH-SJS),https://nhl.com/video/nsh-sjs-stamkos-scores-ppg-against-alex-nedeljkovic-6408434784112
+2026020331,2,REG,07:59,MTL,Phillip Danault,"Lane Hutson, Noah Dobson",EV,1-0 (MTL-NYR),https://nhl.com/video/mtl-nyr-danault-scores-goal-against-joonas-korpisalo-6408476888112
+2026020331,2,REG,09:47,NYR,Will Cuylle,"Marcus Pettersson, J.T. Miller",EV,1-1 (MTL-NYR),https://nhl.com/video/mtl-nyr-cuylle-scores-goal-against-jacob-fowler-6408477291112
+2026020331,2,REG,19:03,NYR,Will Cuylle,Adam Fox,SH,1-2 (MTL-NYR),https://nhl.com/video/mtl-nyr-cuylle-scores-shg-against-jacob-fowler-6408476815112
+2026020331,3,REG,06:44,NYR,Scott Morrow,Noah Laba,EV,1-3 (MTL-NYR),https://nhl.com/video/mtl-nyr-morrow-scores-goal-against-jacob-fowler-6408476057112
+2026020332,2,REG,15:05,VAN,Jake DeBrusk,"Brock Boeser, Jonathan Lekkerimäki",PP,1-0 (VAN-UTA),https://nhl.com/video/van-uta-debrusk-scores-ppg-against-karel-vejmelka-6408479355112
+2026020332,3,REG,02:50,UTA,Vincent Trocheck,"Logan Cooley, Clayton Keller",PP,1-1 (VAN-UTA),https://nhl.com/video/van-uta-trocheck-scores-ppg-against-nikita-tolopilo-6408482326112
+2026020332,3,REG,04:40,VAN,Filip Chytil,Brock Boeser,EV,2-1 (VAN-UTA),https://nhl.com/video/van-uta-chytil-scores-goal-against-karel-vejmelka-6408481154112
+2026020332,3,REG,11:39,UTA,Barrett Hayton,"Kailer Yamamoto, Anders Lee",EV,2-2 (VAN-UTA),https://nhl.com/video/van-uta-hayton-scores-goal-against-nikita-tolopilo-6408481284112
+2026020332,3,REG,15:37,VAN,Brock Boeser,"Jake DeBrusk, Jonathan Lekkerimäki",PP,3-2 (VAN-UTA),https://nhl.com/video/van-uta-boeser-scores-ppg-against-karel-vejmelka-6408482646112
