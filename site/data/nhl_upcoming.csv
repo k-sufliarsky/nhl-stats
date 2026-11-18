@@ -1,12 +1,4 @@
 game_id,date,start_utc,away,home,venue,tv_national,home_win_pct,away_win_pct,away_star,away_star_avg,home_star,home_star_avg,gamecenter_url
-2026020333,2026-11-17,2026-11-18T00:00:00Z,LAK,BOS,TD Garden,,76,24,B. Clarke,62.33,D. Pastrnak,63.35,https://www.nhl.com/gamecenter/2026020333
-2026020335,2026-11-17,2026-11-18T00:00:00Z,EDM,FLA,Amerant Bank Arena,"SN, TVAS",38,62,C. McDavid,75.45,B. Tkachuk,61.09,https://www.nhl.com/gamecenter/2026020335
-2026020336,2026-11-17,2026-11-18T00:00:00Z,CBJ,NYI,UBS Arena,,65,35,Z. Werenski,60.22,M. Schaefer,64.53,https://www.nhl.com/gamecenter/2026020336
-2026020337,2026-11-17,2026-11-18T00:00:00Z,BUF,PHI,Xfinity Mobile Arena,,43,57,Z. Benson,64.45,J. Woll,52.82,https://www.nhl.com/gamecenter/2026020337
-2026020341,2026-11-17,2026-11-18T00:00:00Z,OTT,WPG,Canada Life Centre,,41,59,T. Chabot,60.53,M. Scheifele,61.48,https://www.nhl.com/gamecenter/2026020341
-2026020334,2026-11-17,2026-11-18T00:30:00Z,WSH,TBL,Benchmark International Arena,"ESPN+, HULU, Disney+, SN+",66,34,J. Chychrun,59.39,B. Hagel,68.35,https://www.nhl.com/gamecenter/2026020334
-2026020338,2026-11-17,2026-11-18T00:30:00Z,TOR,CHI,United Center,"TNT, HBO MAX",44,56,A. Matthews,64.36,C. Bedard,57.14,https://www.nhl.com/gamecenter/2026020338
-2026020339,2026-11-17,2026-11-18T01:00:00Z,ANA,STL,Enterprise Center,,49,51,L. Carlsson,57.81,D. Holloway,57.55,https://www.nhl.com/gamecenter/2026020339
-2026020340,2026-11-17,2026-11-18T01:00:00Z,NSH,MIN,Grand Casino Arena,,67,33,R. Josi,61.76,K. Kaprizov,67.36,https://www.nhl.com/gamecenter/2026020340
-2026020342,2026-11-17,2026-11-18T03:00:00Z,DAL,VGK,T-Mobile Arena,"TNT, truTV, HBO MAX",50,50,W. Johnston,60.72,V. Olofsson,65.11,https://www.nhl.com/gamecenter/2026020342
-2026020343,2026-11-17,2026-11-18T03:00:00Z,CGY,SJS,SAP Center at San Jose,SN,56,44,J. Farabee,57.52,M. Celebrini,63.86,https://www.nhl.com/gamecenter/2026020343
+2026020344,2026-11-18,2026-11-19T00:30:00Z,BOS,DET,Little Caesars Arena,"TNT, HBO MAX",38,62,D. Pastrnak,62.76,D. Tarasov,60.33,https://www.nhl.com/gamecenter/2026020344
+2026020345,2026-11-18,2026-11-19T00:30:00Z,MTL,NJD,Prudential Center,Prime,53,47,L. Hutson,62.33,J. Hughes,66.71,https://www.nhl.com/gamecenter/2026020345
+2026020346,2026-11-18,2026-11-19T03:00:00Z,COL,UTA,Delta Center,"TNT, HBO MAX",39,61,C. Makar,64.89,M. Sergachev,63.32,https://www.nhl.com/gamecenter/2026020346
