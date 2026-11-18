@@ -345,27 +345,27 @@ details.how a { color: inherit; }
 .scope-logos .hr-logo.out { opacity: .4; }
 @media (max-width: 640px) { .hr-season .hr-bar i { display: none; } }
 
-/* Divisions: 2 x 2 on laptops, one column of four on phones */
-.scope-logos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; overflow: visible; flex-wrap: initial; }
-.scope-group { display: grid; grid-template-columns: 104px repeat(8, minmax(0, 1fr)); align-items: center; gap: 2px; }
-.scope-group .scope-div { margin-right: 6px; text-align: center; }
+/* Divisions: four rows, one under the other; one shared grid so the logos line up in columns */
+.scope-logos { display: grid; grid-template-columns: max-content repeat(8, minmax(0, 1fr)); gap: 2px 4px; overflow: visible; flex-wrap: initial; }
+.scope-group { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; gap: 0 4px; }
+.scope-group .scope-div { margin-right: 10px; justify-self: stretch; text-align: left; }
 .scope-div .short { display: none; }
-.scope-logos .hr-logo { width: auto; justify-self: center; }
+.scope-logos .hr-logo { width: 100%; max-width: 60px; height: 44px; padding: 2px; justify-self: center; }
+.scope-logos .hr-logo img { width: 40px; height: 38px; }
 @media (max-width: 720px) {
-  .scope-logos { grid-template-columns: minmax(0, 1fr); gap: 2px; overflow: visible; }
-  .scope-group { grid-template-columns: 64px repeat(8, minmax(0, 1fr)); }
+  .scope-logos { gap: 2px; }
+  .scope-group { gap: 0 2px; }
   .scope-group .scope-div { padding: 3px 6px; font-size: 11px; margin-right: 4px; }
   .scope-div .full { display: none; }
   .scope-div .short { display: inline; }
-  .scope-logos .hr-logo { width: 100%; max-width: 36px; height: 28px; padding: 1px; }
-  .scope-logos .hr-logo img { width: 24px; height: 22px; }
+  .scope-logos .hr-logo { max-width: 42px; height: 34px; padding: 1px; }
+  .scope-logos .hr-logo img { width: 30px; height: 28px; }
   .scope-now { font-size: 11px; }
 }
 
 .scope-avg { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--color-fg); font-variant-numeric: tabular-nums; }
 .scope-chip[aria-pressed=true] .scope-avg { color: var(--color-fg); }
-.scope-group { grid-template-columns: max-content repeat(8, minmax(0, 1fr)); }
-@media (max-width: 720px) { .scope-group { grid-template-columns: max-content repeat(8, minmax(0, 1fr)); } .scope-avg { margin-left: 4px; padding: 0 3px; } }
+@media (max-width: 720px) { .scope-avg { margin-left: 4px; padding: 0 3px; } }
 .hr details#method .method-body { columns: 2 340px; column-gap: 40px; margin-top: 10px; }
 .hr details#method .method-body p { max-width: none; margin: 0 0 12px; break-inside: avoid-column; }
 
