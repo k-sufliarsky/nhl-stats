@@ -2153,3 +2153,18 @@ game_id,period,period_type,time,team,scorer,assists,strength,score_after,clip_ur
 2026020343,3,REG,04:15,CGY,Jonathan Castagna,"Aydar Suniev, Maxim Tsyplakov",EV,4-1 (CGY-SJS),https://nhl.com/video/cgy-sjs-castagna-scores-goal-against-yaroslav-askarov-6408531902112
 2026020343,3,REG,15:22,SJS,Mason Marchment,"Tyler Toffoli, Will Smith",PP,4-2 (CGY-SJS),https://nhl.com/video/cgy-sjs-marchment-scores-ppg-against-dustin-wolf-6408534543112
 2026020343,3,REG,19:00,CGY,Jonathan Castagna,"Martin Pospisil, Ryan Strome",EN,5-2 (CGY-SJS),https://nhl.com/video/jonathan-castagna-with-a-goal-vs-san-jose-sharks-6408533589112
+2026020344,1,REG,16:58,DET,Lucas Raymond,"Andrew Copp, Keegan Kolesar",EV,0-1 (BOS-DET),https://nhl.com/video/bos-det-raymond-scores-goal-against-jeremy-swayman-6408573735112
+2026020344,2,REG,02:49,BOS,JJ Peterka,"Mason Lohrei, Casey Mittelstadt",EV,1-1 (BOS-DET),https://nhl.com/video/bos-det-peterka-scores-goal-against-daniil-tarasov-6408574269112
+2026020344,2,REG,11:48,BOS,Pavel Zacha,"David Pastrnak, Morgan Geekie",PP,2-1 (BOS-DET),https://nhl.com/video/bos-det-zacha-scores-ppg-against-daniil-tarasov-6408575245112
+2026020344,3,REG,05:11,BOS,David Pastrnak,"Mason Lohrei, Morgan Geekie",EV,3-1 (BOS-DET),https://nhl.com/video/bos-det-pastrnak-scores-goal-against-daniil-tarasov-6408574686112
+2026020344,3,REG,19:05,BOS,Casey Mittelstadt,Pavel Zacha,EN,4-1 (BOS-DET),https://nhl.com/video/bos-det-mittelstadt-scores-empty-net-goal-6408575613112
+2026020345,1,REG,10:20,NJD,Luke Evangelista,"Timo Meier, Nico Hischier",EV,0-1 (MTL-NJD),https://nhl.com/video/mtl-njd-evangelista-scores-goal-against-jacob-fowler-6408572456112
+2026020345,1,REG,11:00,MTL,Alex Newhook,Lane Hutson,EV,1-1 (MTL-NJD),https://nhl.com/video/mtl-njd-newhook-scores-goal-against-connor-hellebuyck-6408573929112
+2026020345,1,REG,14:43,NJD,Timo Meier,Jesper Bratt,EV,1-2 (MTL-NJD),https://nhl.com/video/mtl-njd-meier-scores-goal-against-jacob-fowler-6408574032112
+2026020345,1,REG,19:18,MTL,Nick Suzuki,"Lane Hutson, Juraj Slafkovský",PP,2-2 (MTL-NJD),https://nhl.com/video/mtl-njd-suzuki-scores-ppg-against-connor-hellebuyck-6408572273112
+2026020345,3,REG,06:17,MTL,Jake Evans,"Oliver Kapanen, Lane Hutson",EV,3-2 (MTL-NJD),https://nhl.com/video/mtl-njd-evans-scores-goal-against-connor-hellebuyck-6408574691112
+2026020346,2,REG,05:22,UTA,Liam O'Brien,"Kailer Yamamoto, Kevin Stenlund",EV,0-1 (COL-UTA),https://nhl.com/video/liam-o-brien-with-a-goal-vs-colorado-avalanche-6408578699112
+2026020346,2,REG,17:53,UTA,Vincent Trocheck,"Clayton Keller, Logan Cooley",PP,0-2 (COL-UTA),https://nhl.com/video/col-uta-trocheck-scores-ppg-against-mackenzie-blackwood-6408580291112
+2026020346,3,REG,01:02,UTA,Dmitri Simashev,Vincent Trocheck,SH,0-3 (COL-UTA),https://nhl.com/video/col-uta-simashev-scores-shg-against-mackenzie-blackwood-6408580038112
+2026020346,3,REG,15:01,COL,Jaden Schwartz,,EV,1-3 (COL-UTA),https://nhl.com/video/col-uta-schwartz-scores-goal-against-sebastian-cossa-6408579665112
+2026020346,3,REG,17:52,UTA,Kevin Stenlund,"Barrett Hayton, MacKenzie Weegar",EN,1-4 (COL-UTA),
