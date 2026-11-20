@@ -2168,3 +2168,77 @@ game_id,period,period_type,time,team,scorer,assists,strength,score_after,clip_ur
 2026020346,3,REG,01:02,UTA,Dmitri Simashev,Vincent Trocheck,SH,0-3 (COL-UTA),https://nhl.com/video/col-uta-simashev-scores-shg-against-mackenzie-blackwood-6408580038112
 2026020346,3,REG,15:01,COL,Jaden Schwartz,,EV,1-3 (COL-UTA),https://nhl.com/video/col-uta-schwartz-scores-goal-against-sebastian-cossa-6408579665112
 2026020346,3,REG,17:52,UTA,Kevin Stenlund,"Barrett Hayton, MacKenzie Weegar",EN,1-4 (COL-UTA),
+2026020347,1,REG,13:54,TOR,Auston Matthews,"William Nylander, Darren Raddysh",PP,0-1 (LAK-TOR),https://nhl.com/video/lak-tor-matthews-scores-ppg-against-darcy-kuemper-6408626856112
+2026020347,1,REG,18:48,TOR,John Tavares,"Auston Matthews, Jack Roslovic",EV,0-2 (LAK-TOR),https://nhl.com/video/lak-tor-tavares-scores-goal-against-darcy-kuemper-6408626880112
+2026020347,2,REG,02:34,TOR,Dakota Joshua,William Nylander,EV,0-3 (LAK-TOR),https://nhl.com/video/lak-tor-joshua-scores-goal-against-darcy-kuemper-6408626135112
+2026020347,2,REG,02:55,LAK,Alex Turcotte,"Joel Armia, Brian Dumoulin",EV,1-3 (LAK-TOR),https://nhl.com/video/lak-tor-turcotte-scores-goal-against-anthony-stolarz-6408628578112
+2026020347,2,REG,10:11,LAK,Alex Laferriere,"Adrian Kempe, Erik Gustafsson",PP,2-3 (LAK-TOR),https://nhl.com/video/lak-tor-laferriere-scores-ppg-against-anthony-stolarz-6408627454112
+2026020347,2,REG,14:51,LAK,Erik Haula,"Mikey Anderson, Joel Edmundson",EV,3-3 (LAK-TOR),https://nhl.com/video/lak-tor-haula-scores-goal-against-anthony-stolarz-6408627929112
+2026020348,1,REG,01:44,OTT,Claude Giroux,"Jake Sanderson, Artem Zub",EV,0-1 (PHI-OTT),https://nhl.com/video/phi-ott-giroux-scores-goal-against-joseph-woll-6408624956112
+2026020348,1,REG,03:52,PHI,Owen Tippett,"Travis Konecny, Tyson Foerster",PP,1-1 (PHI-OTT),https://nhl.com/video/phi-ott-tippett-scores-ppg-against-samuel-ersson-6408625285112
+2026020348,2,REG,03:21,OTT,Dylan Cozens,"Tim Stützle, Fabian Zetterlund",EV,1-2 (PHI-OTT),https://nhl.com/video/phi-ott-cozens-scores-goal-against-joseph-woll-6408625631112
+2026020348,2,REG,13:04,OTT,Drake Batherson,"Tim Stützle, Stephen Halliday",PP,1-3 (PHI-OTT),https://nhl.com/video/phi-ott-batherson-scores-ppg-against-joseph-woll-6408628895112
+2026020348,2,REG,18:39,PHI,Cam York,"Jamie Drysdale, Travis Konecny",EV,2-3 (PHI-OTT),https://nhl.com/video/phi-ott-york-scores-goal-against-samuel-ersson-6408629611112
+2026020348,3,REG,00:38,OTT,Philip Tomasino,Drake Batherson,EV,2-4 (PHI-OTT),https://nhl.com/video/phi-ott-tomasino-scores-goal-against-joseph-woll-6408628746112
+2026020348,3,REG,05:27,OTT,Dylan Cozens,Ridly Greig,EV,2-5 (PHI-OTT),https://nhl.com/video/phi-ott-cozens-scores-goal-against-joseph-woll-6408629452112
+2026020348,3,REG,06:25,PHI,Cam York,"Noah Cates, Sean Couturier",PP,3-5 (PHI-OTT),https://nhl.com/video/phi-ott-york-scores-ppg-against-samuel-ersson-6408628860112
+2026020348,3,REG,06:40,PHI,Tyson Foerster,Travis Konecny,EV,4-5 (PHI-OTT),https://nhl.com/video/phi-ott-foerster-scores-goal-against-samuel-ersson-6408628870112
+2026020348,3,REG,17:27,PHI,Jamie Drysdale,"Tyson Foerster, Christian Dvorak",PP,5-5 (PHI-OTT),https://nhl.com/video/phi-ott-drysdale-scores-goal-against-samuel-ersson-6408631138112
+2026020348,4,OT,00:39,PHI,Travis Konecny,"Jamie Drysdale, Joseph Woll",EV,6-5 (PHI-OTT),https://nhl.com/video/phi-ott-konecny-scores-goal-against-samuel-ersson-6408632164112
+2026020349,2,REG,13:29,TBL,John Carlson,"Jake Guentzel, Brayden Point",PP,0-1 (EDM-TBL),https://nhl.com/video/edm-tbl-carlson-scores-ppg-against-devon-levi-6408630403112
+2026020349,3,REG,10:46,TBL,Ilya Mikheyev,Erik Cernak,EV,0-2 (EDM-TBL),https://nhl.com/video/edm-tbl-mikheyev-scores-goal-against-devon-levi-6408632733112
+2026020349,3,REG,14:29,TBL,Nikita Kucherov,,EV,0-3 (EDM-TBL),https://nhl.com/video/edm-tbl-kucherov-scores-goal-against-devon-levi-6408632363112
+2026020349,3,REG,18:24,EDM,Colton Dach,"Shakir Mukhamadullin, Vasily Podkolzin",EV,1-3 (EDM-TBL),https://nhl.com/video/edm-tbl-mukhamadullin-scores-goal-against-andrei-vasilevskiy-6408631587112
+2026020350,1,REG,07:38,PIT,Rickard Rakell,"Trevor van Riemsdyk, Kris Letang",EV,0-1 (STL-PIT),https://nhl.com/video/stl-pit-rakell-scores-goal-against-joel-hofer-6408625369112
+2026020350,2,REG,04:58,STL,Justin Barron,,EV,1-1 (STL-PIT),https://nhl.com/video/stl-pit-barron-scores-goal-against-arturs-silovs-6408630794112
+2026020350,2,REG,09:14,STL,Dylan Holloway,"Connor McMichael, Pavel Buchnevich",EV,2-1 (STL-PIT),https://nhl.com/video/stl-pit-holloway-scores-goal-against-arturs-silovs-6408627151112
+2026020350,2,REG,17:20,STL,Jimmy Snuggerud,"Robert Thomas, Jake Neighbours",EV,3-1 (STL-PIT),https://nhl.com/video/stl-pit-snuggerud-scores-goal-against-arturs-silovs-6408630191112
+2026020350,3,REG,07:09,STL,Jimmy Snuggerud,"Robert Thomas, Jake Neighbours",EV,4-1 (STL-PIT),https://nhl.com/video/stl-pit-snuggerud-scores-goal-against-arturs-silovs-6408631112112
+2026020350,3,REG,15:24,PIT,Rickard Rakell,"Sidney Crosby, Evgeni Malkin",PP,4-2 (STL-PIT),https://nhl.com/video/stl-pit-rakell-scores-goal-against-joel-hofer-6408631237112
+2026020350,3,REG,17:16,STL,Dylan Holloway,"Robert Thomas, Cam Fowler",EN,5-2 (STL-PIT),https://nhl.com/video/stl-pit-holloway-scores-empty-net-goal-6408631241112
+2026020351,1,REG,05:25,BUF,Jack Quinn,"Noah Ostlund, Rasmus Dahlin",EV,1-0 (BUF-WSH),https://nhl.com/video/buf-wsh-quinn-scores-goal-against-logan-thompson-6408623618112
+2026020351,1,REG,09:46,BUF,Rasmus Dahlin,,PP,2-0 (BUF-WSH),https://nhl.com/video/buf-wsh-dahlin-scores-goal-against-logan-thompson-6408626561112
+2026020351,1,REG,10:11,BUF,Beck Malenstyn,"Sam Carrick, Tyson Kozak",EV,3-0 (BUF-WSH),https://nhl.com/video/buf-wsh-malenstyn-scores-goal-against-logan-thompson-6408626676112
+2026020351,1,REG,10:54,WSH,Alex Tuch,,EV,3-1 (BUF-WSH),https://nhl.com/video/buf-wsh-tuch-scores-goal-against-ukko-pekka-luukkonen-6408625674112
+2026020351,1,REG,15:55,BUF,Zach Benson,"Peyton Krebs, Owen Power",EV,4-1 (BUF-WSH),https://nhl.com/video/buf-wsh-benson-scores-goal-against-charlie-lindgren-6408626108112
+2026020351,2,REG,19:51,BUF,Tage Thompson,"Jack Quinn, Josh Doan",PP,5-1 (BUF-WSH),https://nhl.com/video/buf-wsh-thompson-scores-ppg-against-charlie-lindgren-6408629527112
+2026020351,3,REG,08:52,WSH,Ryan Leonard,"Alex Tuch, Ilya Protas",PP,5-2 (BUF-WSH),https://nhl.com/video/buf-wsh-leonard-scores-ppg-against-ukko-pekka-luukkonen-6408631306112
+2026020351,3,REG,09:44,WSH,Boone Jenner,"Alex Ovechkin, Aliaksei Protas",EV,5-3 (BUF-WSH),https://nhl.com/video/buf-wsh-jenner-scores-goal-against-ukko-pekka-luukkonen-6408630346112
+2026020351,3,REG,19:17,BUF,Jack Quinn,Owen Power,EN,6-3 (BUF-WSH),https://nhl.com/video/buf-wsh-quinn-scores-empty-net-goal-6408632540112
+2026020352,3,REG,13:41,CAR,Nikolaj Ehlers,"Logan Stankoven, Alexander Nikishin",EV,0-1 (MTL-CAR),https://nhl.com/video/mtl-car-ehlers-scores-goal-against-jakub-dobes-6408631224112
+2026020352,3,REG,15:01,MTL,Lane Hutson,"Nick Suzuki, Cole Caufield",EV,1-1 (MTL-CAR),https://nhl.com/video/mtl-car-hutson-scores-goal-against-pyotr-kochetkov-6408632128112
+2026020352,4,OT,00:38,MTL,Lane Hutson,"Nick Suzuki, Phillip Danault",EV,2-1 (MTL-CAR),https://nhl.com/video/mtl-car-hutson-scores-goal-against-pyotr-kochetkov-6408631155112
+2026020353,1,REG,01:59,CBJ,Zach Werenski,"Matthew Knies, Kent Johnson",EV,1-0 (CBJ-CHI),https://nhl.com/video/cbj-chi-werenski-scores-goal-against-spencer-knight-6408628193112
+2026020353,1,REG,15:24,CBJ,Kent Johnson,"Zach Werenski, Damon Severson",EV,2-0 (CBJ-CHI),https://nhl.com/video/cbj-chi-johnson-scores-goal-against-spencer-knight-6408628909112
+2026020353,2,REG,11:58,CHI,Frank Nazar,"Sam Rinzel, Patrick Kane",PP,2-1 (CBJ-CHI),https://nhl.com/video/cbj-chi-nazar-scores-ppg-against-cam-talbot-6408631813112
+2026020353,2,REG,13:57,CBJ,Matthew Knies,"Charlie Coyle, Adam Fantilli",PP,3-1 (CBJ-CHI),https://nhl.com/video/cbj-chi-knies-scores-ppg-against-spencer-knight-6408631522112
+2026020353,3,REG,03:52,CHI,Cole Smith,Sam Rinzel,EV,3-2 (CBJ-CHI),https://nhl.com/video/cbj-chi-smith-scores-goal-against-cam-talbot-6408632092112
+2026020353,3,REG,19:29,CBJ,Adam Fantilli,"Matthew Knies, Valeri Nichushkin",EN,4-2 (CBJ-CHI),https://nhl.com/video/cbj-chi-fantilli-scores-empty-net-goal-6408633497112
+2026020354,1,REG,02:35,NYI,Anthony Duclair,"Casey Cizikas, Tony DeAngelo",EV,1-0 (NYI-WPG),https://nhl.com/video/nyi-wpg-duclair-scores-goal-against-nicolas-daws-6408624371112
+2026020354,1,REG,03:06,WPG,Morgan Barron,"Dylan Samberg, Adam Lowry",EV,1-1 (NYI-WPG),https://nhl.com/video/nyi-wpg-barron-scores-goal-against-semyon-varlamov-6408624088112
+2026020354,1,REG,08:44,NYI,Emil Heineman,,SH,2-1 (NYI-WPG),https://nhl.com/video/nyi-wpg-heineman-scores-shg-against-nicolas-daws-6408624123112
+2026020354,1,REG,17:47,WPG,Kyle Connor,"Gabriel Vilardi, Mark Scheifele",EV,2-2 (NYI-WPG),https://nhl.com/video/nyi-wpg-connor-scores-goal-against-semyon-varlamov-6408625784112
+2026020354,2,REG,00:20,NYI,Kyle Palmieri,Simon Holmstrom,EV,3-2 (NYI-WPG),https://nhl.com/video/nyi-wpg-palmieri-scores-goal-against-nicolas-daws-6408627195112
+2026020354,2,REG,12:09,WPG,Cole Perfetti,"Gabriel Vilardi, Mark Scheifele",PP,3-3 (NYI-WPG),https://nhl.com/video/nyi-wpg-perfetti-scores-ppg-against-semyon-varlamov-6408629101112
+2026020354,4,OT,01:58,WPG,Josh Morrissey,"Mark Scheifele, Kyle Connor",EV,3-4 (NYI-WPG),https://nhl.com/video/nyi-wpg-morrissey-scores-goal-against-semyon-varlamov-6408631050112
+2026020355,1,REG,00:25,MIN,Joel Eriksson Ek,"Matt Boldy, Kirill Kaprizov",EV,1-0 (MIN-CGY),https://nhl.com/video/min-cgy-eriksson-ek-scores-goal-against-dustin-wolf-6408628872112
+2026020355,1,REG,08:09,MIN,Quinn Hughes,"Joel Eriksson Ek, Jared Spurgeon",EV,2-0 (MIN-CGY),https://nhl.com/video/min-cgy-hughes-scores-goal-against-dustin-wolf-6408629390112
+2026020355,1,REG,15:51,CGY,Simon Nemec,"Morgan Frost, Adam Klapka",EV,2-1 (MIN-CGY),https://nhl.com/video/min-cgy-nemec-scores-goal-against-jesper-wallstedt-6408628915112
+2026020355,2,REG,02:31,MIN,Kirill Kaprizov,"Matt Boldy, Quinn Hughes",PP,3-1 (MIN-CGY),https://nhl.com/video/min-cgy-kaprizov-scores-ppg-against-dustin-wolf-6408630817112
+2026020355,3,REG,19:11,MIN,Matt Boldy,Kirill Kaprizov,EN,4-1 (MIN-CGY),https://nhl.com/video/min-cgy-boldy-scores-empty-net-goal-6408634971112
+2026020356,2,REG,00:08,COL,Nicolas Roy,"Nazem Kadri, Gabriel Landeskog",EV,0-1 (ANA-COL),https://nhl.com/video/ana-col-roy-scores-goal-against-lukas-dostal-6408632869112
+2026020356,2,REG,03:25,COL,Brock Nelson,"T.J. Hughes, Devon Toews",PP,0-2 (ANA-COL),https://nhl.com/video/ana-col-nelson-scores-ppg-against-lukas-dostal-6408632672112
+2026020356,2,REG,10:04,COL,Brock Nelson,Martin Necas,EV,0-3 (ANA-COL),https://nhl.com/video/ana-col-nelson-scores-goal-against-lukas-dostal-6408633088112
+2026020356,3,REG,10:33,COL,Devon Toews,"Brock Nelson, Martin Necas",EV,0-4 (ANA-COL),https://nhl.com/video/ana-col-toews-scores-goal-against-lukas-dostal-6408636785112
+2026020357,1,REG,07:37,SEA,Berkly Catton,"Brandon Montour, Matthew Wood",PP,0-1 (VAN-SEA),https://nhl.com/video/van-sea-catton-scores-ppg-against-leevi-merilainen-6408633334112
+2026020357,1,REG,11:31,VAN,Jake DeBrusk,"Brock Boeser, Filip Hronek",PP,1-1 (VAN-SEA),https://nhl.com/video/van-sea-debrusk-scores-ppg-against-philipp-grubauer-6408632396112
+2026020357,2,REG,08:00,SEA,Matty Beniers,"Brandon Montour, Mackie Samoskevich",EV,1-2 (VAN-SEA),https://nhl.com/video/van-sea-beniers-scores-goal-against-leevi-merilainen-6408637056112
+2026020357,2,REG,08:54,SEA,Berkly Catton,,EV,1-3 (VAN-SEA),https://nhl.com/video/van-sea-catton-scores-goal-against-leevi-merilainen-6408635215112
+2026020357,3,REG,10:37,SEA,Jordan Eberle,"Matty Beniers, Vince Dunn",PP,1-4 (VAN-SEA),https://nhl.com/video/van-sea-eberle-scores-ppg-against-leevi-merilainen-6408636437112
+2026020357,3,REG,19:17,SEA,Berkly Catton,Frederick Gaudreau,EN,1-5 (VAN-SEA),https://nhl.com/video/berkly-catton-with-a-goal-vs-vancouver-canucks-6408638307112
+2026020358,1,REG,03:18,DAL,Miro Heiskanen,"Mikko Rantanen, Jason Robertson",EV,1-0 (DAL-VGK),https://nhl.com/video/dal-vgk-heiskanen-scores-goal-against-adin-hill-6408634438112
+2026020358,1,REG,14:35,DAL,Wyatt Johnston,"Jason Robertson, Nils Lundkvist",EV,2-0 (DAL-VGK),https://nhl.com/video/dal-vgk-johnston-scores-goal-against-adin-hill-6408634963112
+2026020358,2,REG,07:36,VGK,Victor Olofsson,"Mark Stone, Jack Eichel",PP,2-1 (DAL-VGK),https://nhl.com/video/dal-vgk-olofsson-scores-ppg-against-jake-oettinger-6408636277112
+2026020358,2,REG,10:17,VGK,William Karlsson,"Braeden Bowman, Trevor Connelly",EV,2-2 (DAL-VGK),https://nhl.com/video/dal-vgk-karlsson-scores-goal-against-jake-oettinger-6408635021112
+2026020358,3,REG,05:34,VGK,Jeremy Lauzon,Tomas Hertl,EV,2-3 (DAL-VGK),https://nhl.com/video/dal-vgk-lauzon-scores-goal-against-jake-oettinger-6408636431112
+2026020358,3,REG,16:58,DAL,Thomas Harley,,EV,3-3 (DAL-VGK),https://nhl.com/video/dal-vgk-harley-scores-goal-against-adin-hill-6408637655112
