@@ -1,15 +1,6 @@
 game_id,date,start_utc,away,home,venue,tv_national,home_win_pct,away_win_pct,away_star,away_star_avg,home_star,home_star_avg,gamecenter_url
-2026020359,2026-11-21,2026-11-21T18:00:00Z,EDM,CAR,Lenovo Center,"SN, NHLN",61,39,C. McDavid,72.67,J. Blake,66.14,https://www.nhl.com/gamecenter/2026020359
-2026020360,2026-11-21,2026-11-21T20:30:00Z,CHI,CGY,Scotiabank Saddledome,"SN, SN1",64,36,C. Bedard,56.27,J. Farabee,57.83,https://www.nhl.com/gamecenter/2026020360
-2026020361,2026-11-21,2026-11-21T23:00:00Z,BUF,FLA,Amerant Bank Arena,,54,46,Z. Benson,63.27,B. Tkachuk,61.39,https://www.nhl.com/gamecenter/2026020361
-2026020362,2026-11-21,2026-11-21T23:00:00Z,PIT,NSH,Bridgestone Arena,,66,34,R. Rakell,57.24,R. Josi,60.59,https://www.nhl.com/gamecenter/2026020362
-2026020363,2026-11-21,2026-11-22T00:00:00Z,WSH,BOS,TD Garden,,65,35,J. Chychrun,57.75,D. Pastrnak,63.77,https://www.nhl.com/gamecenter/2026020363
-2026020364,2026-11-21,2026-11-22T00:00:00Z,CBJ,TOR,Scotiabank Arena,SN,50,50,Z. Werenski,60.0,A. Matthews,65.21,https://www.nhl.com/gamecenter/2026020364
-2026020365,2026-11-21,2026-11-22T00:00:00Z,PHI,MTL,Centre Bell,"SNE, NHLN, TVAS",72,28,T. Konecny,51.07,L. Hutson,63.7,https://www.nhl.com/gamecenter/2026020365
-2026020366,2026-11-21,2026-11-22T00:00:00Z,LAK,OTT,Canadian Tire Centre,"SN1, TVAS2",72,28,A. Panarin,62.06,J. Sanderson,61.8,https://www.nhl.com/gamecenter/2026020366
-2026020367,2026-11-21,2026-11-22T00:00:00Z,NYI,DET,Little Caesars Arena,,42,58,M. Schaefer,65.1,A. DeBrincat,60.09,https://www.nhl.com/gamecenter/2026020367
-2026020368,2026-11-21,2026-11-22T00:00:00Z,NJD,STL,Enterprise Center,,43,57,J. Hughes,65.68,J. Barron,58.37,https://www.nhl.com/gamecenter/2026020368
-2026020369,2026-11-21,2026-11-22T00:00:00Z,VGK,WPG,Canada Life Centre,SNW,43,57,M. Marner,64.27,M. Scheifele,60.09,https://www.nhl.com/gamecenter/2026020369
-2026020370,2026-11-21,2026-11-22T02:00:00Z,ANA,UTA,Delta Center,,56,44,L. Carlsson,56.0,M. Sergachev,62.13,https://www.nhl.com/gamecenter/2026020370
-2026020371,2026-11-21,2026-11-22T03:00:00Z,MIN,VAN,Rogers Arena,SN,13,87,K. Kaprizov,68.04,E. Pettersson,51.12,https://www.nhl.com/gamecenter/2026020371
-2026020372,2026-11-21,2026-11-22T03:00:00Z,SEA,SJS,SAP Center at San Jose,,48,52,B. Montour,55.61,M. Celebrini,63.77,https://www.nhl.com/gamecenter/2026020372
+2026020373,2026-11-22,2026-11-22T17:30:00Z,CAR,NYR,Madison Square Garden,"NHLN, SN, TVAS",31,69,J. Blake,66.57,A. Fox,65.14,https://www.nhl.com/gamecenter/2026020373
+2026020374,2026-11-22,2026-11-22T22:00:00Z,BUF,TBL,Benchmark International Arena,"SN, NHLN, TVAS",70,30,Z. Benson,63.87,B. Hagel,68.3,https://www.nhl.com/gamecenter/2026020374
+2026020375,2026-11-22,2026-11-23T00:00:00Z,EDM,STL,Enterprise Center,"SNW, SN1",38,62,C. McDavid,72.04,D. Holloway,57.78,https://www.nhl.com/gamecenter/2026020375
+2026020376,2026-11-22,2026-11-23T00:00:00Z,PIT,DAL,American Airlines Center,TVAS,76,24,R. Rakell,57.41,J. Robertson,60.41,https://www.nhl.com/gamecenter/2026020376
+2026020377,2026-11-22,2026-11-23T01:00:00Z,CHI,VAN,Rogers Arena,,41,59,C. Bedard,56.27,E. Pettersson,51.12,https://www.nhl.com/gamecenter/2026020377
