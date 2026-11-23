@@ -2352,3 +2352,36 @@ game_id,period,period_type,time,team,scorer,assists,strength,score_after,clip_ur
 2026020372,2,REG,07:47,SJS,Ivar Stenberg,"Dmitry Orlov, Macklin Celebrini",PP,1-4 (SEA-SJS),https://nhl.com/video/sea-sjs-stenberg-scores-ppg-against-philipp-grubauer-6408724475112
 2026020372,2,REG,11:02,SEA,Matty Beniers,"Mackie Samoskevich, Kaapo Kakko",EV,2-4 (SEA-SJS),https://nhl.com/video/sea-sjs-beniers-scores-goal-against-alex-nedeljkovic-6408724885112
 2026020372,2,REG,16:58,SEA,Ryan Winterton,"Jacob Melanson, Brandon Montour",EV,3-4 (SEA-SJS),https://nhl.com/video/sea-sjs-winterton-scores-goal-against-alex-nedeljkovic-6408725291112
+2026020373,1,REG,13:00,CAR,Eric Robinson,Jordan Staal,SH,1-0 (CAR-NYR),https://nhl.com/video/car-nyr-robinson-scores-shg-against-dylan-garand-6408739019112
+2026020373,1,REG,14:12,NYR,Mika Zibanejad,"Adam Fox, J.T. Miller",PP,1-1 (CAR-NYR),https://nhl.com/video/car-nyr-zibanejad-scores-ppg-against-brandon-bussi-6408738824112
+2026020373,2,REG,13:13,CAR,Jackson Blake,"Taylor Hall, Logan Stankoven",EV,2-1 (CAR-NYR),https://nhl.com/video/car-nyr-blake-scores-goal-against-dylan-garand-6408739651112
+2026020373,2,REG,17:46,CAR,Alexander Nikishin,"Shayne Gostisbehere, Eric Robinson",EV,3-1 (CAR-NYR),https://nhl.com/video/car-nyr-nikishin-scores-goal-against-dylan-garand-6408740433112
+2026020373,2,REG,18:27,CAR,Sean Walker,"Sebastian Aho, William Carrier",EV,4-1 (CAR-NYR),https://nhl.com/video/car-nyr-walker-scores-goal-against-dylan-garand-6408739461112
+2026020373,3,REG,15:13,NYR,J.T. Miller,Adam Fox,PP,4-2 (CAR-NYR),https://nhl.com/video/car-nyr-miller-scores-ppg-against-brandon-bussi-6408742419112
+2026020373,3,REG,17:38,CAR,Jordan Martinook,Seth Jarvis,EN,5-2 (CAR-NYR),https://nhl.com/video/car-nyr-martinook-scores-empty-net-goal-6408742148112
+2026020374,1,REG,03:35,BUF,Jiri Kulich,,EV,1-0 (BUF-TBL),https://nhl.com/video/buf-tbl-kulich-scores-goal-against-dennis-hildeby-6408743676112
+2026020374,1,REG,12:21,TBL,Nikita Kucherov,"Jake Guentzel, John Carlson",PP,1-1 (BUF-TBL),https://nhl.com/video/buf-tbl-kucherov-scores-ppg-against-ukko-pekka-luukkonen-6408744061112
+2026020374,2,REG,01:22,BUF,Jack Quinn,"Noah Ostlund, Conor Timmins",EV,2-1 (BUF-TBL),https://nhl.com/video/buf-tbl-quinn-scores-goal-against-dennis-hildeby-6408745653112
+2026020374,2,REG,11:05,BUF,Tage Thompson,"Zach Benson, Rasmus Dahlin",PP,3-1 (BUF-TBL),https://nhl.com/video/buf-tbl-thompson-scores-ppg-against-dennis-hildeby-6408746154112
+2026020374,2,REG,16:17,BUF,Tage Thompson,Zach Benson,EV,4-1 (BUF-TBL),https://nhl.com/video/buf-tbl-thompson-scores-goal-against-dennis-hildeby-6408746069112
+2026020374,3,REG,05:50,TBL,Gage Goncalves,"Yanni Gourde, Erik Cernak",EV,4-2 (BUF-TBL),https://nhl.com/video/buf-tbl-goncalves-scores-goal-against-ukko-pekka-luukkonen-6408747851112
+2026020374,3,REG,06:50,BUF,Noah Ostlund,"Peyton Krebs, Owen Power",EV,5-2 (BUF-TBL),https://nhl.com/video/buf-tbl-ostlund-scores-goal-against-dennis-hildeby-6408746687112
+2026020374,3,REG,18:53,BUF,Zach Benson,Jiri Kulich,EN,6-2 (BUF-TBL),https://nhl.com/video/zach-benson-with-a-goal-vs-tampa-bay-lightning-6408746110112
+2026020375,1,REG,05:56,EDM,Kasperi Kapanen,"Connor Murphy, Connor McDavid",EV,1-0 (EDM-STL),https://nhl.com/video/edm-stl-kapanen-scores-goal-against-joel-hofer-6408746785112
+2026020375,2,REG,09:15,EDM,Leon Draisaitl,"Vasily Podkolzin, Mathieu Joseph",EV,2-0 (EDM-STL),https://nhl.com/video/edm-stl-draisaitl-scores-goal-against-joel-hofer-6408748084112
+2026020375,2,REG,17:44,STL,Dalibor Dvorsky,Mason McTavish,EV,2-1 (EDM-STL),https://nhl.com/video/edm-stl-dvorsky-scores-goal-against-tristan-jarry-6408747613112
+2026020375,2,REG,18:29,EDM,Filip Hallander,"Kasperi Kapanen, Evan Bouchard",EV,3-1 (EDM-STL),https://nhl.com/video/edm-stl-hallander-scores-goal-against-joel-hofer-6408748490112
+2026020375,3,REG,04:40,EDM,Colton Dach,Jason Dickinson,EV,4-1 (EDM-STL),https://nhl.com/video/edm-stl-dach-scores-goal-against-joel-hofer-6408749396112
+2026020375,3,REG,10:27,STL,Philip Broberg,"Logan Mailloux, Jimmy Snuggerud",PP,4-2 (EDM-STL),https://nhl.com/video/edm-stl-broberg-scores-goal-against-tristan-jarry-6408749005112
+2026020375,3,REG,15:12,STL,Pavel Buchnevich,Jonatan Berggren,EV,4-3 (EDM-STL),https://nhl.com/video/edm-stl-buchnevich-scores-goal-against-tristan-jarry-6408749130112
+2026020375,3,REG,15:38,STL,Jimmy Snuggerud,"Justin Barron, Robert Thomas",EV,4-4 (EDM-STL),https://nhl.com/video/edm-stl-snuggerud-scores-goal-against-tristan-jarry-6408749631112
+2026020376,2,REG,12:44,DAL,Joel Kiviranta,"Wyatt Johnston, Mikko Rantanen",EV,0-1 (PIT-DAL),https://nhl.com/video/pit-dal-kiviranta-scores-goal-against-arturs-silovs-6408746935112
+2026020377,1,REG,00:35,CHI,Frank Nazar,,EV,1-0 (CHI-VAN),https://nhl.com/video/chi-van-nazar-scores-goal-against-nikita-tolopilo-6408748178112
+2026020377,1,REG,02:48,CHI,Tyler Bertuzzi,"Roman Kantserov, Patrick Kane",PP,2-0 (CHI-VAN),https://nhl.com/video/chi-van-bertuzzi-scores-ppg-against-nikita-tolopilo-6408748290112
+2026020377,1,REG,11:30,CHI,Roman Kantserov,"Tyler Bertuzzi, Frank Nazar",PP,3-0 (CHI-VAN),https://nhl.com/video/roman-kantserov-with-a-powerplay-goal-vs-vancouver-canucks-6408748507112
+2026020377,1,REG,12:44,CHI,Dominic Toninato,"Jordan Greenway, Cole Smith",EV,4-0 (CHI-VAN),https://nhl.com/video/chi-van-toninato-scores-goal-against-nikita-tolopilo-6408749182112
+2026020377,1,REG,13:27,VAN,Zeev Buium,"Arshdeep Bains, Jacob Quillan",EV,4-1 (CHI-VAN),https://nhl.com/video/chi-van-buium-scores-goal-against-drew-commesso-6408748815112
+2026020377,2,REG,06:39,VAN,Filip Chytil,Paul Cotter,EV,4-2 (CHI-VAN),https://nhl.com/video/chi-van-chytil-scores-goal-against-drew-commesso-6408748850112
+2026020377,2,REG,12:56,CHI,Roman Kantserov,"Alex Vlasic, Ryan Donato",EV,5-2 (CHI-VAN),https://nhl.com/video/chi-van-kantserov-scores-goal-against-kevin-lankinen-6408750228112
+2026020377,2,REG,16:56,VAN,Jake DeBrusk,"Brock Boeser, Filip Hronek",PP,5-3 (CHI-VAN),https://nhl.com/video/chi-van-debrusk-scores-goal-against-drew-commesso-6408749455112
+2026020377,3,REG,11:07,CHI,Roman Kantserov,"Tyler Bertuzzi, Patrick Kane",PP,6-3 (CHI-VAN),https://nhl.com/video/chi-van-kantserov-scores-ppg-against-kevin-lankinen-6408750134112

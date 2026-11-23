@@ -1,6 +1,8 @@
 game_id,date,start_utc,away,home,venue,tv_national,home_win_pct,away_win_pct,away_star,away_star_avg,home_star,home_star_avg,gamecenter_url
-2026020373,2026-11-22,2026-11-22T17:30:00Z,CAR,NYR,Madison Square Garden,"NHLN, SN, TVAS",31,69,J. Blake,66.57,A. Fox,65.14,https://www.nhl.com/gamecenter/2026020373
-2026020374,2026-11-22,2026-11-22T22:00:00Z,BUF,TBL,Benchmark International Arena,"SN, NHLN, TVAS",70,30,Z. Benson,63.87,B. Hagel,68.3,https://www.nhl.com/gamecenter/2026020374
-2026020375,2026-11-22,2026-11-23T00:00:00Z,EDM,STL,Enterprise Center,"SNW, SN1",38,62,C. McDavid,72.04,D. Holloway,57.78,https://www.nhl.com/gamecenter/2026020375
-2026020376,2026-11-22,2026-11-23T00:00:00Z,PIT,DAL,American Airlines Center,TVAS,76,24,R. Rakell,57.41,J. Robertson,60.41,https://www.nhl.com/gamecenter/2026020376
-2026020377,2026-11-22,2026-11-23T01:00:00Z,CHI,VAN,Rogers Arena,,41,59,C. Bedard,56.27,E. Pettersson,51.12,https://www.nhl.com/gamecenter/2026020377
+2026020378,2026-11-23,2026-11-24T00:00:00Z,CBJ,NJD,Prudential Center,NHLN,67,33,Z. Werenski,61.05,J. Hughes,66.39,https://www.nhl.com/gamecenter/2026020378
+2026020379,2026-11-23,2026-11-24T00:30:00Z,LAK,MTL,Centre Bell,"SN+, TVAS",74,26,A. Panarin,62.0,L. Hutson,62.96,https://www.nhl.com/gamecenter/2026020379
+2026020380,2026-11-23,2026-11-24T00:30:00Z,CGY,OTT,Canadian Tire Centre,SN+,72,28,J. Farabee,58.46,J. Sanderson,62.25,https://www.nhl.com/gamecenter/2026020380
+2026020381,2026-11-23,2026-11-24T00:30:00Z,TOR,NYI,UBS Arena,SN,71,29,A. Matthews,64.76,M. Schaefer,65.32,https://www.nhl.com/gamecenter/2026020381
+2026020382,2026-11-23,2026-11-24T00:30:00Z,UTA,WPG,Canada Life Centre,SN+,50,50,C. Keller,61.65,M. Scheifele,59.67,https://www.nhl.com/gamecenter/2026020382
+2026020383,2026-11-23,2026-11-24T02:40:00Z,ANA,SEA,Climate Pledge Arena,,54,46,L. Carlsson,55.38,B. Montour,56.05,https://www.nhl.com/gamecenter/2026020383
+2026020384,2026-11-23,2026-11-24T03:00:00Z,MIN,SJS,SAP Center at San Jose,"SN, SN360",28,72,K. Kaprizov,68.24,M. Celebrini,63.39,https://www.nhl.com/gamecenter/2026020384
