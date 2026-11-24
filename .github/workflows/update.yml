@@ -6,7 +6,8 @@ name: Update data and publish site
 # GitHub's scheduler is best-effort and often skips runs at :00 and :30, so the checks run at odd minutes:
 # twice an hour overnight (US Eastern), and hourly the rest of the day so a skipped night is caught up next morning.
 # GitHub drops many scheduled runs, so a scheduled run that finds tonight's games under way doesn't give up: its
-# "wait" job keeps checking every 10 minutes (up to WAIT_HOURS) until they're done, then the update runs.
+# "wait" job keeps checking every 10 minutes (up to WAIT_HOURS) until they're done, then the update runs. If the
+# games still aren't done by then (late West Coast games), it starts a fresh run that carries on waiting.
 # Pushes to main also run the check (and always republish the site).
 on:
   schedule:
@@ -18,11 +19,16 @@ on:
         description: "Update now, even if nothing new has finished"
         type: boolean
         default: false
+      wait:
+        description: "Wait for games under way to finish (used when a waiting run hands over to a new one)"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: ["site/**", "nhl_ratings.py", "rating_model.py", "model/**", ".github/workflows/update.yml"]
 
 permissions:
+  actions: write    # lets a waiting run start the next one
   contents: write
   pages: write
   id-token: write
@@ -30,15 +36,15 @@ permissions:
 env:
   # How long after the day's last game starts to update. Games take about 2.5 hours; raise or lower to taste.
   HOURS_AFTER_LAST_START: "3"
-  # How long a scheduled run keeps waiting for games in progress to finish.
-  WAIT_HOURS: "5"
+  # How long one run keeps waiting for games in progress to finish (GitHub stops jobs at 6 hours).
+  WAIT_HOURS: "5.5"
 
 # Each job has its own concurrency group, so a scheduled run waiting for games never holds up a push's update or deploy.
 jobs:
   wait:
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event.inputs.wait == 'true'
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 from October 2026
-    timeout-minutes: 330
+    timeout-minutes: 350
     concurrency:
       group: wait-for-games   # one waiting run at a time; later scheduled runs queue behind it
       cancel-in-progress: false
@@ -47,7 +53,14 @@ jobs:
         with:
           ref: main
       - name: Wait until tonight's games are done (if they're under way)
+        id: wait
         run: python3 should_update.py --wait
+
+      - name: Still not done? Hand over to a new run that keeps waiting
+        if: steps.wait.outputs.still_waiting == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run update.yml --repo "$GITHUB_REPOSITORY" --ref main -f wait=true
 
   update:
     needs: wait
@@ -115,11 +128,12 @@ jobs:
 
   deploy:
     needs: update
-    # Publish when there's new data, and always on pushes, manual runs and re-runs. A re-run of just this job
+    # Publish when there's new data, and always on pushes, manual runs (not hand-over runs) and re-runs. A re-run of just this job
     # reuses the update job's outputs from the first attempt, so it would otherwise skip again.
     if: >-
       ${{ !cancelled() && needs.update.result == 'success' && (
-      github.event_name != 'schedule' || fromJSON(github.run_attempt) > 1 ||
+      github.event_name == 'push' || fromJSON(github.run_attempt) > 1 ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.wait != 'true') ||
       needs.update.outputs.changed == 'true') }}
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 from October 2026
     concurrency:
@@ -127,7 +141,7 @@ jobs:
       cancel-in-progress: false
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment2.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -136,5 +150,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
+      # GitHub sometimes doesn't list a just-uploaded artifact yet ("No artifacts named github-pages were found"),
+      # so give it a moment, and try once more after 30 seconds if the first deploy fails.
+      - run: sleep 10
       - id: deployment
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+      - id: deployment2
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5

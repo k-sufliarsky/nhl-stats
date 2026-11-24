@@ -11,7 +11,8 @@ It's time when the most recent NHL game day (US Eastern date) has finished, i.e.
 Prints `update=true|false` and `game_day=YYYY-MM-DD` lines; in GitHub Actions they're also written to $GITHUB_OUTPUT.
 
 With --wait (used by scheduled runs): if the newest game day has started but isn't ready yet, keep checking every
-10 minutes until it is, for at most WAIT_HOURS hours (default 5). GitHub's scheduler drops most runs, so one run
+10 minutes until it is, for at most WAIT_HOURS hours (default 5). If it's still not ready then, it prints
+still_waiting=true and the workflow starts a fresh run to carry on. GitHub's scheduler drops most runs, so one run
 that fires mid-evening has to be enough to catch the night's games.
 """
 import datetime as dt
@@ -89,8 +90,10 @@ def decide_waiting(wait):
             print(f"NHL API error ({e}); retrying", file=sys.stderr, flush=True)
             time.sleep(60)
             continue
-        if update or not wait or ready_at is None or now() >= deadline:
-            return update, day, why
+        if update or not wait or ready_at is None:
+            return update, day, why, False
+        if now() >= deadline:
+            return update, day, why + f" — stopped waiting after {WAIT_HOURS:g} h", True
         # sleep until the ready time if that's sooner, else poll
         pause = POLL_SECONDS if now() >= ready_at else min(POLL_SECONDS, (ready_at - now()).total_seconds() + 5)
         pause = max(30.0, min(pause, (deadline - now()).total_seconds()))
@@ -99,9 +102,9 @@ def decide_waiting(wait):
 
 
 if __name__ == "__main__":
-    update, day, why = decide_waiting("--wait" in sys.argv[1:])
+    update, day, why, still_waiting = decide_waiting("--wait" in sys.argv[1:])
     print(why, file=sys.stderr)
-    lines = [f"update={'true' if update else 'false'}", f"game_day={day}"]
+    lines = [f"update={'true' if update else 'false'}", f"game_day={day}", f"still_waiting={'true' if still_waiting else 'false'}"]
     print("\n".join(lines))
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
