@@ -2420,3 +2420,11 @@ game_id,period,period_type,time,team,scorer,assists,strength,score_after,clip_ur
 2026020384,2,REG,00:13,MIN,Joel Eriksson Ek,"Kirill Kaprizov, Jared Spurgeon",EV,3-2 (MIN-SJS),https://nhl.com/video/min-sjs-eriksson-ek-scores-goal-against-yaroslav-askarov-6408797790112
 2026020384,3,REG,18:24,MIN,Blake Coleman,Matt Kiersted,EN,4-2 (MIN-SJS),https://nhl.com/video/min-sjs-coleman-scores-empty-net-goal-6408800134112
 2026020384,3,REG,19:06,MIN,Joel Eriksson Ek,"Matt Boldy, Kirill Kaprizov",EN,5-2 (MIN-SJS),https://nhl.com/video/joel-eriksson-ek-with-a-goal-vs-san-jose-sharks-6408800913112
+2026020385,1,REG,06:13,VGK,Jack Eichel,"Mitch Marner, Victor Olofsson",PP,1-0 (VGK-EDM),https://nhl.com/video/vgk-edm-eichel-scores-ppg-against-devon-levi-6408849287112
+2026020385,1,REG,09:07,VGK,Trevor Connelly,,EV,2-0 (VGK-EDM),https://nhl.com/video/vgk-edm-connelly-scores-goal-against-devon-levi-6408850179112
+2026020385,2,REG,03:03,EDM,Colton Dach,"Evan Bouchard, Mathieu Joseph",EV,2-1 (VGK-EDM),https://nhl.com/video/vgk-edm-dach-scores-goal-against-carter-hart-6408851594112
+2026020385,2,REG,19:41,EDM,Connor McDavid,"Kasperi Kapanen, Evan Bouchard",EV,2-2 (VGK-EDM),https://nhl.com/video/vgk-edm-mcdavid-scores-goal-against-carter-hart-6408850544112
+2026020385,3,REG,02:08,VGK,Nic Dowd,Marc Gatcomb,EV,3-2 (VGK-EDM),https://nhl.com/video/vgk-edm-dowd-scores-goal-against-devon-levi-6408852120112
+2026020385,3,REG,05:29,VGK,Jack Eichel,"Trevor Connelly, Shea Theodore",EV,4-2 (VGK-EDM),https://nhl.com/video/vgk-edm-eichel-scores-goal-against-devon-levi-6408851824112
+2026020385,3,REG,05:45,EDM,Vasily Podkolzin,"Connor Murphy, Ryan Shea",EV,4-3 (VGK-EDM),https://nhl.com/video/vgk-edm-podkolzin-scores-goal-against-carter-hart-6408853596112
+2026020385,3,REG,17:28,VGK,Trevor Connelly,"Mitch Marner, William Karlsson",EN,5-3 (VGK-EDM),https://nhl.com/video/vgk-edm-connelly-scores-empty-net-goal-6408852711112
