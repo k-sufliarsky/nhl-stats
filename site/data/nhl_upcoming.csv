@@ -1,15 +1,16 @@
 game_id,date,start_utc,away,home,venue,tv_national,home_win_pct,away_win_pct,away_star,away_star_avg,home_star,home_star_avg,gamecenter_url
-2026020386,2026-11-25,2026-11-26T00:00:00Z,WPG,BOS,TD Garden,,65,35,M. Scheifele,59.68,D. Pastrnak,64.83,https://www.nhl.com/gamecenter/2026020386
-2026020387,2026-11-25,2026-11-26T00:00:00Z,NYR,BUF,KeyBank Center,,53,47,A. Fox,65.57,Z. Benson,63.83,https://www.nhl.com/gamecenter/2026020387
-2026020388,2026-11-25,2026-11-26T00:00:00Z,CAR,TBL,Benchmark International Arena,"TNT, truTV, HBO MAX",41,59,J. Blake,67.04,B. Hagel,68.4,https://www.nhl.com/gamecenter/2026020388
-2026020389,2026-11-25,2026-11-26T00:00:00Z,OTT,FLA,Amerant Bank Arena,,43,57,T. Stützle,61.56,S. Jones,61.29,https://www.nhl.com/gamecenter/2026020389
-2026020390,2026-11-25,2026-11-26T00:00:00Z,STL,NYI,UBS Arena,,54,46,J. Barron,58.05,M. Schaefer,63.87,https://www.nhl.com/gamecenter/2026020390
-2026020391,2026-11-25,2026-11-26T00:00:00Z,CGY,PIT,PPG Paints Arena,,51,49,J. Farabee,57.48,R. Rakell,57.65,https://www.nhl.com/gamecenter/2026020391
-2026020392,2026-11-25,2026-11-26T00:00:00Z,PHI,WSH,Capital One Arena,,54,46,T. Konecny,51.69,J. Chychrun,58.43,https://www.nhl.com/gamecenter/2026020392
-2026020393,2026-11-25,2026-11-26T00:00:00Z,NJD,CBJ,Nationwide Arena,,36,64,J. Hughes,66.75,Z. Werenski,61.59,https://www.nhl.com/gamecenter/2026020393
-2026020394,2026-11-25,2026-11-26T00:30:00Z,VAN,DET,Little Caesars Arena,Prime,71,29,E. Pettersson,51.17,A. DeBrincat,60.04,https://www.nhl.com/gamecenter/2026020394
-2026020395,2026-11-25,2026-11-26T01:00:00Z,NSH,DAL,American Airlines Center,,64,36,R. Josi,60.83,W. Johnston,59.86,https://www.nhl.com/gamecenter/2026020395
-2026020396,2026-11-25,2026-11-26T01:00:00Z,UTA,MIN,Grand Casino Arena,,74,26,K. Yamamoto,61.75,K. Kaprizov,68.85,https://www.nhl.com/gamecenter/2026020396
-2026020397,2026-11-25,2026-11-26T02:30:00Z,MTL,COL,Ball Arena,,56,44,L. Hutson,63.56,C. Makar,65.0,https://www.nhl.com/gamecenter/2026020397
-2026020399,2026-11-25,2026-11-26T02:40:00Z,CHI,SEA,Climate Pledge Arena,,66,34,C. Bedard,56.27,B. Montour,56.75,https://www.nhl.com/gamecenter/2026020399
-2026020398,2026-11-25,2026-11-26T03:00:00Z,SJS,ANA,Honda Center,,54,46,M. Celebrini,63.79,L. Carlsson,55.38,https://www.nhl.com/gamecenter/2026020398
+2026020400,2026-11-27,2026-11-27T18:00:00Z,TOR,BOS,TD Garden,TVAS,73,27,A. Matthews,64.92,D. Pastrnak,64.75,https://www.nhl.com/gamecenter/2026020400
+2026020401,2026-11-27,2026-11-27T18:00:00Z,CGY,NJD,Prudential Center,SN,70,30,J. Farabee,57.58,J. Hughes,66.48,https://www.nhl.com/gamecenter/2026020401
+2026020402,2026-11-27,2026-11-27T18:00:00Z,UTA,NSH,Bridgestone Arena,,58,42,M. Sergachev,60.04,R. Josi,61.42,https://www.nhl.com/gamecenter/2026020402
+2026020403,2026-11-27,2026-11-27T19:00:00Z,DAL,STL,Enterprise Center,"NHLN, SN+",42,58,W. Johnston,59.5,D. Holloway,57.4,https://www.nhl.com/gamecenter/2026020403
+2026020404,2026-11-27,2026-11-27T20:00:00Z,OTT,TBL,Benchmark International Arena,,54,46,J. Sanderson,61.94,B. Hagel,67.67,https://www.nhl.com/gamecenter/2026020404
+2026020405,2026-11-27,2026-11-27T20:00:00Z,VAN,PHI,Xfinity Mobile Arena,"SNP, SN1",74,26,E. Pettersson,51.12,T. Konecny,51.18,https://www.nhl.com/gamecenter/2026020405
+2026020406,2026-11-27,2026-11-27T20:00:00Z,FLA,WSH,Capital One Arena,,46,54,S. Jones,61.44,J. Chychrun,58.82,https://www.nhl.com/gamecenter/2026020406
+2026020407,2026-11-27,2026-11-27T20:00:00Z,DET,CBJ,Nationwide Arena,,51,49,D. Tarasov,60.55,Z. Werenski,60.52,https://www.nhl.com/gamecenter/2026020407
+2026020408,2026-11-27,2026-11-27T21:00:00Z,COL,MIN,Grand Casino Arena,TVAS,60,40,C. Makar,66.2,K. Kaprizov,68.63,https://www.nhl.com/gamecenter/2026020408
+2026020409,2026-11-27,2026-11-27T21:00:00Z,LAK,ANA,Honda Center,,58,42,A. Panarin,61.5,L. Carlsson,55.42,https://www.nhl.com/gamecenter/2026020409
+2026020410,2026-11-27,2026-11-27T21:00:00Z,VGK,SJS,SAP Center at San Jose,SN,35,65,M. Marner,64.5,M. Celebrini,63.16,https://www.nhl.com/gamecenter/2026020410
+2026020411,2026-11-27,2026-11-27T22:30:00Z,NYR,CHI,United Center,"TNT, truTV, HBO MAX, SN+",41,59,A. Fox,65.21,C. Bedard,56.27,https://www.nhl.com/gamecenter/2026020411
+2026020412,2026-11-27,2026-11-28T00:30:00Z,WPG,NYI,UBS Arena,,57,43,M. Scheifele,60.08,M. Schaefer,64.58,https://www.nhl.com/gamecenter/2026020412
+2026020413,2026-11-27,2026-11-28T01:00:00Z,PIT,BUF,KeyBank Center,"TNT, truTV, HBO MAX, SN+, TVAS",67,33,R. Rakell,57.46,Z. Benson,63.48,https://www.nhl.com/gamecenter/2026020413
+2026020414,2026-11-27,2026-11-28T01:00:00Z,SEA,EDM,Rogers Place,SN,69,31,B. Montour,56.52,C. McDavid,71.67,https://www.nhl.com/gamecenter/2026020414
