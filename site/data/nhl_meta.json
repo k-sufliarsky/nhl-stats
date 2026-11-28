@@ -1,22 +1,22 @@
 {
  "season": "20262027",
  "playoffs": false,
- "games": 399,
- "generated": "2026-11-26",
- "generated_at": "2026-11-26T06:00:30Z",
- "last_game_day": "2026-11-25",
+ "games": 414,
+ "generated": "2026-11-28",
+ "generated_at": "2026-11-28T04:00:38Z",
+ "last_game_day": "2026-11-27",
  "reference": {
   "F": {
-   "games": 9517,
+   "games": 9874,
    "median_raw": 0.413
   },
   "D": {
-   "games": 4846,
-   "median_raw": 0.278
+   "games": 5029,
+   "median_raw": 0.277
   },
   "G": {
-   "games": 840,
-   "median_raw": 0.063
+   "games": 872,
+   "median_raw": 0.052
   }
  },
  "scale": "rank -> 50 + 15 * normal quantile, 0-100",
@@ -37,7 +37,7 @@
  },
  "xg_onice_weight": 1.3008,
  "xg": {
-  "shots": 33348,
+  "shots": 34527,
   "frozen": true,
   "trained_on": [
    "20242025",
